@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/souhailaS/WEB-API-EVOLUTION-VISUALIZATIONS-CLI.git"
@@ -23,5 +24,10 @@
   "bugs": {
     "url": "https://github.com/souhailaS/WEB-API-EVOLUTION-VISUALIZATIONS-CLI/issues"
   },
-  "homepage": "https://github.com/souhailaS/WEB-API-EVOLUTION-VISUALIZATIONS-CLI#readme"
+  "homepage": "https://github.com/souhailaS/WEB-API-EVOLUTION-VISUALIZATIONS-CLI#readme",
+  "dependencies": {
+    "@apidevtools/swagger-parser": "^10.1.0",
+    "commander": "^10.0.1",
+    "simple-git": "^3.19.0"
+  }
 }

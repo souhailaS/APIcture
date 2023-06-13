@@ -5,7 +5,7 @@ The apivol tool is a command-line interface (CLI) tool designed to provide visua
 ## How to Use apivol?
 To use the apivol tool, follow these steps:
 
-Install the apivol tool using `npm install apivol`
+Install the apivol tool using `npm install apivol` <span style="color: red;"> [still not available publicly yet] an initial version will be there soon</span>
 
  1. Run the `apivol` command followed by the desired subcommand to generate the desired visualizations. The available subcommands include:
 
@@ -14,7 +14,7 @@ Install the apivol tool using `npm install apivol`
    - `apivol versioning <spec-path>`: Analyzes version upgrades versus changes types.
    - `apivol metrics`: Generates visualizations for API metrics.
 
-2. Specify any additional options or flags to customize the visualization output, such as the desired format (e.g., PDF, SVG, interactive HTML).
+1. Specify any additional options or flags to customize the visualization output, such as the desired format (e.g., PDF, SVG, interactive HTML).
 
 ### Metrics Options
 

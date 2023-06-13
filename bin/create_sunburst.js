@@ -8,6 +8,9 @@ import { fileURLToPath } from "url";
 import SwaggerParser from "@apidevtools/swagger-parser";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+// var echarts = require('node-echarts-canvas');
+import node_echarts from "node-echarts-canvas";
+import render from "echarts-svg";
 
 async function createSunburst(
   commit,
@@ -294,7 +297,7 @@ function generateGrayGradient(maxNumber) {
   return gradient;
 }
 
-async function main(path) {
+async function main(path, format) {
   var data = [];
   var commits = fs.readFileSync(join(path, ".api_commits.json"));
   commits = JSON.parse(commits);
@@ -373,12 +376,25 @@ async function main(path) {
             saveAsImage: {
               show: true,
               title: "Save as PNG",
-              pixelRatio: 2.5,
+              pixelRatio: 3,
             },
             restore: {
               show: true,
               title: "Restore",
             },
+            // // save as svg
+            // myTool1: {
+            //   show: true,
+            //   title: "Save as SVG",
+            //   icon:
+            //     "path://M864 128H160c-17.7 0-32 14.3-32 32v704c0 " +
+            //     "17.7 14.3 32 32 32h704c17.7 0 32-14.3 " +
+            //     "32-32V160c0-17.7-14.3-32-32-32zM640 " +
+            //     "704H384v-96h256v96zM640 512H384v-96h256v96zM640 " +
+            //     "320H384v-96h256v96zM736 864H288V160h448v704z " +
+            //     "m-192-96h96v-96h-96v96z",
+            //   onclick: function () {
+            //   }
           },
         },
 
@@ -490,7 +506,9 @@ async function main(path) {
             position: "outside",
             padding: 0,
             silent: false,
-            fontSize: 9,
+            fontSize: 11,
+            color : "#000000",
+            fontWeight: "bold",
           },
           itemStyle: {
             borderWidth: 2,
@@ -503,36 +521,47 @@ async function main(path) {
         JSON.stringify(chartOptions, null, 2)
       );
 
-      // render js file
-      var template = fs.readFileSync(
-        join("bin/templates/sunburst.ejs"),
-        "utf8",
-        (err, template) => {
-          if (err) {
-            console.error("Error reading template:", err);
-            return;
+      // if (format == "html") {
+        var template = fs.readFileSync(
+          join("bin/templates/sunburst.ejs"),
+          "utf8",
+          (err, template) => {
+            if (err) {
+              console.error("Error reading template:", err);
+              return;
+            }
           }
-        }
-      );
-      var rendered = ejs.render(template, {
-        chartOptions: JSON.parse(JSON.stringify(chartOptions)),
-      });
+        );
+        var rendered = ejs.render(template, {
+          chartOptions: JSON.parse(JSON.stringify(chartOptions)),
+          format: format
+        });
 
-      if (!fs.existsSync(join(path, "..", "apivol-outputs"))) {
-        fs.mkdirSync(join(path, "..", "apivol-outputs"), { recursive: true });
-      }
-      fs.writeFileSync(
-        join(path,"..", "apivol-outputs", "sunburst.html"),
-        rendered,
-        "utf8",
-        (err) => {
-          if (err) {
-            console.error("Error saving output:", err);
-          } else {
-            console.log("Output saved as", { outputPath });
-          }
+        if (!fs.existsSync(join(path, "..", "apivol-outputs"))) {
+          fs.mkdirSync(join(path, "..", "apivol-outputs"), { recursive: true });
         }
-      );
+        fs.writeFileSync(
+          join(path, "..", "apivol-outputs", "sunburst.html"),
+          rendered,
+          "utf8",
+          (err) => {
+            if (err) {
+              console.error("Error saving output:", err);
+            } else {
+              console.log("Output saved as", { outputPath });
+            }
+          }
+        );
+      // }
+
+      // PNG output
+      if (format == "png") {
+       
+      }
+
+      // SVG output
+      if (format == "svg") {
+      }
 
       return chartOptions;
     }
@@ -541,6 +570,3 @@ async function main(path) {
   await nextCommit(commits[i]);
 }
 
-main(
-  "/Users/souhailaserbout/git/WEB-API-EVOLUTION-VISUALIZATIONS-CLI/test_repos/schema/previous_versions"
-);

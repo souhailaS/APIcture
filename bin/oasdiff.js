@@ -7,34 +7,84 @@ import path, { join } from "path";
 import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+// colored logs
+import chalk from "chalk";
+import cliProgress from "cli-progress";
+import colors from "ansi-colors";
 
 import yaml_to_json from "js-yaml";
 
-async function computeDiff(path) {
+export async function computeDiff(path) {
+  path = join(path, ".previous_versions");
   var api_commits = fs.readFileSync(join(path, ".api_commits.json"));
+
+  // sort the commits by date
+
   fs.writeFileSync(join(path, ".diffs.json"), JSON.stringify([]));
   fs.writeFileSync(join(path, ".breaking.json"), JSON.stringify([]));
   fs.writeFileSync(join(path, ".non-breaking.json"), JSON.stringify([]));
 
   api_commits = JSON.parse(api_commits);
   var api_commits = api_commits.sort((a, b) => {
-    a.commit_date - b.commit_date;
+    // ascending order
+    return new Date(a.commit_date) - new Date(b.commit_date);
+  });
+  console.log(chalk.blue(`|- Found ${api_commits.length} commits`));
+  console.log(
+    // chalk.blue(
+    //   `|-- From ${api_commits[0].commit_date} to ${
+    //     api_commits[api_commits.length - 1].commit_date
+    //   }`
+    // )
+    // fomart the dats as xxth Month, Year
+    chalk.blue(
+      `|-- From [${new Date(api_commits[0].commit_date).getDate()}th ${new Date(
+        api_commits[0].commit_date).toLocaleString("default", {
+          month: "long",
+        })
+      }, ${new Date(api_commits[0].commit_date).getFullYear()}] to [${
+        new Date(api_commits[api_commits.length - 1].commit_date).getDate()
+      }th ${
+        new Date(api_commits[api_commits.length - 1].commit_date).toLocaleString(
+          "default",
+          {
+            month: "long",
+          }
+        )
+      }, ${new Date(api_commits[api_commits.length - 1].commit_date).getFullYear()}]`
+    )
+
+  );
+
+
+
+  // show progress bar
+  // add text near the bar
+  var bar = new cliProgress.SingleBar(
+    {
+      format:
+        "|- Computing diffs - " +
+        colors.cyan("{bar}") +
+        "| {percentage}% || {value}/{total} Chunks || Speed: {speed}",
+    },
+    cliProgress.Presets.rect
+  );
+
+  bar.start(api_commits.length - 1, 0, {
+    speed: "N/A",
+
   });
 
-  console.log(api_commits);
   var next_pair = async (i) => {
-    if (api_commits[i + 1]) {
-      console.log(
-        `|- Commit: ${api_commits[i].hash} - ${api_commits[i + 1].hash}`
-      );
-
+    bar.update(i);
+    if (api_commits[i]) {
       try {
         var cmd = `oasdiff -base  ${join(
           path,
-          api_commits[i].hash + "." + api_commits[i].fileExtension
+          api_commits[i - 1].hash + "." + api_commits[i - 1].fileExtension
         )} -revision ${join(
           path,
-          api_commits[i + 1].hash + "." + api_commits[i + 1].fileExtension
+          api_commits[i].hash + "." + api_commits[i].fileExtension
         )} -exclude-examples`;
 
         var { stdout, stderr } = await exec(cmd);
@@ -73,10 +123,10 @@ async function computeDiff(path) {
         // diff 2 -check-breaking
         var cmd_2 = `oasdiff -check-breaking -base  ${join(
           path,
-          api_commits[i].hash + "." + api_commits[i].fileExtension
+          api_commits[i - 1].hash + "." + api_commits[i - 1].fileExtension
         )} -revision ${join(
           path,
-          api_commits[i + 1].hash + "." + api_commits[i + 1].fileExtension
+          api_commits[i].hash + "." + api_commits[i].fileExtension
         )} -exclude-examples  -format json`;
 
         var { stdout, stderr } = await exec(cmd_2);
@@ -94,23 +144,28 @@ async function computeDiff(path) {
           JSON.stringify(breaking)
         );
       } catch (error) {
-        if (error.reason != "duplicated mapping key") console.log(error);
+        // if (error.reason != "duplicated mapping key") console.log(error);
       }
 
       if (i < api_commits.length) {
-        return await next_pair(i + 1);
+        i++;
+        return await next_pair(i);
       } else {
+        console.log(chalk.blue("|- Done"));
+        bar.stop();
         return;
       }
+    } else {
+      console.log(chalk.blue("|- Done"));
+      bar.stop();
+      return;
     }
   };
 
-  return await next_pair(0);
+  return await next_pair(1);
 }
 
 async function extractNonBreakingChanges(diff) {
-  console.log("diff");
-  console.log(diff);
   var nonBreakingChanges = {
     "api title added": 0,
     "api title modified": 0,
@@ -409,5 +464,3 @@ async function extractNonBreakingChanges(diff) {
   }
   return nonBreakingChanges;
 }
-
-computeDiff("test_repos/schema/previous_versions");

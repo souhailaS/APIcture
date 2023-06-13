@@ -1,0 +1,27 @@
+{
+  "name": "web-api-evolution-visualizations-cli",
+  "version": "0.0.1",
+  "description": "A CLI tool for web API evolution visualization",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/souhailaS/WEB-API-EVOLUTION-VISUALIZATIONS-CLI.git"
+  },
+  "keywords": [
+    "Web",
+    "API",
+    "Visualization",
+    "Evolution",
+    "OpenAPI",
+    "Metrics"
+  ],
+  "author": "Souhaila Serbout",
+  "license": "MIT ",
+  "bugs": {
+    "url": "https://github.com/souhailaS/WEB-API-EVOLUTION-VISUALIZATIONS-CLI/issues"
+  },
+  "homepage": "https://github.com/souhailaS/WEB-API-EVOLUTION-VISUALIZATIONS-CLI#readme"
+}

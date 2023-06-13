@@ -18,6 +18,7 @@ import { Command } from "commander";
 import { execSync } from "child_process";
 import { fetchHistory } from "../fetch_history.js";
 import { computeDiff} from "../oasdiff.js";
+import { generateChangesViz } from "../create_sunburst.js";
 const program = new Command();
 
 program.name("apivol").description("CLI").version("0.0.1");
@@ -31,7 +32,8 @@ program
     try {
     await fetchHistory(repoPath);
     await computeDiff(repoPath);
-    
+    await generateChangesViz(repoPath);
+
     } catch (err) {
         console.log(err);
     }

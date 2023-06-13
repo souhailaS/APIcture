@@ -8,9 +8,9 @@ import { fileURLToPath } from "url";
 import SwaggerParser from "@apidevtools/swagger-parser";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-// var echarts = require('node-echarts-canvas');
-import node_echarts from "node-echarts-canvas";
-import render from "echarts-svg";
+import chalk from "chalk";
+import open from "open";
+
 
 async function createSunburst(
   commit,
@@ -113,9 +113,7 @@ async function createSunburst(
     commit_time = time_data;
   }
 
-  console.log(commit);
 
-  console.log(content);
   var version = content.info.version;
 
   var commit_version = {
@@ -133,7 +131,7 @@ async function createSunburst(
   };
 
   if (semver.valid(version) && semver.valid(previous_version)) {
-    console.log(previous_version, version);
+
     if (previous_version) {
       // if minore version
       if (semver.diff(previous_version, version) == "minor") {
@@ -216,7 +214,7 @@ async function createSunburst(
 
       commit_version.children.push(breaking);
     } catch (err) {
-      console.log(err);
+      // console.log(err);
     }
   }
 
@@ -238,8 +236,6 @@ async function createSunburst(
     var non_breaking_changes = Object.values(
       non_breaking_changes_arr.nonBreakingChanges
     ).reduce((a, b) => a + b, 0);
-
-    console.log(non_breaking_changes);
     non_breaking.value = non_breaking_changes;
 
     // filter the non breaking changes
@@ -297,7 +293,8 @@ function generateGrayGradient(maxNumber) {
   return gradient;
 }
 
-async function main(path, format) {
+export async function generateChangesViz(path, format) {
+  path = join(path, ".previous_versions");
   var data = [];
   var commits = fs.readFileSync(join(path, ".api_commits.json"));
   commits = JSON.parse(commits);
@@ -324,12 +321,10 @@ async function main(path, format) {
     color_dict[year] = colors[index];
   });
 
-  console.log(colors);
-  console.log(commits.length);
+
   var i = 0;
   var nextCommit = async function (commit) {
     var previous_version = null;
-    console.log(i);
 
     if (i > 0) {
       var previous_content = await SwaggerParser.parse(
@@ -338,7 +333,7 @@ async function main(path, format) {
       previous_version = previous_content.info.version;
     }
     i = i + 1;
-    console.log(commit);
+
     var content = await SwaggerParser.parse(
       join(path, commit.hash + "." + commit.fileExtension)
     );
@@ -507,7 +502,7 @@ async function main(path, format) {
             padding: 0,
             silent: false,
             fontSize: 11,
-            color : "#000000",
+            color: "#000000",
             fontWeight: "bold",
           },
           itemStyle: {
@@ -520,53 +515,117 @@ async function main(path, format) {
         join(path, ".sunburst-source.json"),
         JSON.stringify(chartOptions, null, 2)
       );
-
+      fs.writeFileSync(
+        join(path, ".sunburst.ejs"),
+        `<!DOCTYPE html>
+  <html>
+    <head>
+      <title>ECharts Chart</title>
+      <style>
+        /* Add any custom CSS styles here */
+      </style>
+    </head>
+    <body>
+      <div id="chartContainer" style="height: 100vh"></div>
+      <!-- import echart from online  -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/4.1.0/echarts.min.js"></script>
+      <script>
+                // Initialize ECharts chart with the container element
+                var chartContainer = document.getElementById('chartContainer');
+                var chart = echarts.init(chartContainer, null, {
+                  renderer: 'svg'
+                });
+  
+                // Set the chart options and data
+                var chartOptions = <%-JSON.stringify(JSON.parse(JSON.stringify(chartOptions))) %>;
+                chart.setOption(chartOptions);
+  
+  
+                let format = "<%=format %>";
+                if(format != "svg"){
+  
+                 // Convert the chart to a data URL
+                 var dataURL = chart.getDataURL({
+                      type: format, // Support png and jpeg only
+                      pixelRatio: 2, // Increase pixelRatio for higher resolution
+                      backgroundColor: "#fff", // Set background color, if desired
+                    });
+  
+                    // Create a link element
+                    var link = document.createElement("a");
+                    link.href = dataURL;
+                    link.download = "chart."+format;
+  
+                    // Programmatically trigger the click event to download the image
+                    link.click();
+                  }
+  
+                
+  
+  
+  
+  
+        
+      </script>
+    </body>
+  </html>`
+      );
       // if (format == "html") {
-        var template = fs.readFileSync(
-          join("bin/templates/sunburst.ejs"),
-          "utf8",
-          (err, template) => {
-            if (err) {
-              console.error("Error reading template:", err);
-              return;
-            }
+      var template = fs.readFileSync(
+        join(path,".sunburst.ejs"),
+        "utf8",
+        (err, template) => {
+          if (err) {
+            console.error("Error reading template:", err);
+            return;
           }
-        );
-        var rendered = ejs.render(template, {
-          chartOptions: JSON.parse(JSON.stringify(chartOptions)),
-          format: format
-        });
-
-        if (!fs.existsSync(join(path, "..", "apivol-outputs"))) {
-          fs.mkdirSync(join(path, "..", "apivol-outputs"), { recursive: true });
         }
-        fs.writeFileSync(
-          join(path, "..", "apivol-outputs", "sunburst.html"),
-          rendered,
-          "utf8",
-          (err) => {
-            if (err) {
-              console.error("Error saving output:", err);
-            } else {
-              console.log("Output saved as", { outputPath });
-            }
+      );
+
+      // delete the template file
+     
+
+      var rendered = ejs.render(template, {
+        chartOptions: JSON.parse(JSON.stringify(chartOptions)),
+        format: format,
+      });
+
+      // fs.unlinkSync(join(path, ".sunburst.ejs"));
+
+      if (!fs.existsSync(join(path, "..", "apivol-outputs"))) {
+        fs.mkdirSync(join(path, "..", "apivol-outputs"), { recursive: true });
+      }
+      fs.writeFileSync(
+        join(path, "..", "apivol-outputs", "sunburst.html"),
+        rendered,
+        "utf8",
+        (err) => {
+          if (err) {
+            console.error("Error saving output:", err);
+          } else {
+            console.log("Output saved as", { outputPath });
           }
-        );
+        }
+      );
       // }
 
       // PNG output
       if (format == "png") {
-       
       }
 
       // SVG output
       if (format == "svg") {
       }
 
+      // console log link to the output html file
+      console.log(chalk.greenBright.underline.bold.italic(
+        "|- Output Visualization saved as: ",
+        join(path, "..", "apivol-outputs", "sunburst.html"))
+      );
+      open(join(path, "..", "apivol-outputs", "sunburst.html"));
       return chartOptions;
     }
   };
 
   await nextCommit(commits[i]);
 }
-

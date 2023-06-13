@@ -79,7 +79,7 @@ fs.writeFileSync(
   join(REPO_PATH, "previous_versions", ".api_commits.json"),
   JSON.stringify(
     previousVersions.map((version) => {
-      return { commits_date: version.date, hash: version.hash, fileExtension: version.fileExtension };
+      return { commit_date: version.date, hash: version.hash, fileExtension: version.fileExtension };
     })
   )
 );

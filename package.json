@@ -27,12 +27,22 @@
   "homepage": "https://github.com/souhailaS/WEB-API-EVOLUTION-VISUALIZATIONS-CLI#readme",
   "dependencies": {
     "@apidevtools/swagger-parser": "^10.1.0",
+    "ansi-colors": "^4.1.3",
     "canvas": "^2.11.2",
+    "chart.js": "^4.3.0",
+    "chartjs-node-canvas": "^4.1.6",
+    "cli-progress": "^3.12.0",
     "commander": "^10.0.1",
     "echarts": "^5.4.2",
+    "echarts-svg": "^0.0.6",
     "ejs": "^3.1.9",
     "jsdom": "^22.1.0",
+    "node-echarts-canvas": "^1.2.6",
     "semver": "^7.5.1",
-    "simple-git": "^3.19.0"
+    "simple-git": "^3.19.0",
+    "xmlbuilder2": "^3.1.1"
+  },
+  "bin": {
+    "apivol": "./bin/cli/cli.js"
   }
 }

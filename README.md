@@ -7,16 +7,57 @@ To use the apivol tool, follow these steps:
 
 Install the apivol tool using `npm install apivol`
 
-Run the apivol command followed by the desired subcommand to generate the desired visualizations. The available subcommands include:
+ 1. Run the `apivol` command followed by the desired subcommand to generate the desired visualizations. The available subcommands include:
+
+   - `apivol <spec-path>`: Generates the visualizations for the OpenAPI specification located at the specified path.
+   - `apivol changes <spec-path>`: Focuses specifically on changes localization.
+   - `apivol versioning <spec-path>`: Analyzes version upgrades versus changes types.
+   - `apivol metrics`: Generates visualizations for API metrics.
+
+2. Specify any additional options or flags to customize the visualization output, such as the desired format (e.g., PDF, SVG, interactive HTML).
+
+### Metrics Options
+
+When using the `apivol metrics` subcommand, you have the option to select specific API size metrics that you want to visualize the evolution of over time. 
+
+There are a set of available options of the `metrics` subcommand :
+
+- `--endpoints(-e)`: Count the number of endpoints at every commit timestamp.
+- `--paths(-p)`: Count the number of paths at every commit timestamp.
+- `--breaking-changes(-bc)`: Count the frequently detected breaking changes in the API history.
+- `--methods(-m)`: Track the evolution of the usage of HTTP methods in the API over time.
+- `--breaking-methods(-bm)`: Analyze the types of API changes occurring within specific HTTP methods.
+- `--parameters(-param)`: Depict the number of parameters and parameterized operations present in the API at every commit timestamp. Also, count the number of distinct parameters used in the API for each commit.
+- `--datamodel(-d)`: Reflect the evolution of the complexity of the API's data model by counting the number of used schemas and their properties, as well as the number of distinct properties at each commit timestamp.
+
+These options allow you to choose specific API size metrics that you want to visualize the evolution of over time. Feel free to select the options that best suit your analysis needs to gain insights into the changes and growth of your Web APIs.
+
+Feel free to explore the available metrics options and adapt them to your specific needs to gain deeper insights into the evolution of your Web APIs.
+
+## Examples of Usage
+
+Here are a few examples of how to use the `apivol` tool:
+
+1. Visualize the changes in an OpenAPI specification:
+   
+```
+apivol changes -r /path/to/git-repo
+```
+
+2. Analyze the version upgrades and changes types in an OpenAPI specification:
+   
+```
+apivol versioning /path/to/git-repo
+```
+
+3. Generate visualizations for API endpoints related metrics:
 
 ```
-apivol <spec-path>: Generates the visualizations for the OpenAPI specification located at the specified path.
-apivol changes <spec-path>: Focuses specifically on changes localization.
-apivol versioning <spec-path>: Analyzes version upgrades versus changes types.
-apivol metrics: Generates visualizations for API metrics.
+apivol metrics --endpoints  /path/to/git-repo
 ```
 
-Specify any additional options or flags to customize the visualization output, such as the desired format (e.g., PDF, SVG, interactive HTML).
 
 
-Please refer to the documentation for more detailed instructions on using the apivol tool and understanding the various visualizations it offers.
+These examples illustrate some of the basic functionalities of the `apivol` tool. Feel free to explore the available options and adapt them to your specific needs to gain deeper insights into the evolution of your Web APIs.
+
+## Test

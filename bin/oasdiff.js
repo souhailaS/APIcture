@@ -8,6 +8,8 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+import yaml_to_json from "js-yaml";
+
 async function computeDiff(path) {
   var api_commits = fs.readFileSync(join(path, ".api_commits.json"));
   fs.writeFileSync(join(path, ".diffs.json"), JSON.stringify([]));
@@ -27,13 +29,17 @@ async function computeDiff(path) {
       try {
         var cmd = `oasdiff -base  ${join(
           path,
-          api_commits[i].hash +"."+ api_commits[i].fileExtension
+          api_commits[i].hash + "." + api_commits[i].fileExtension
         )} -revision ${join(
           path,
-          api_commits[i + 1].hash +"."+ api_commits[i + 1].fileExtension
+          api_commits[i + 1].hash + "." + api_commits[i + 1].fileExtension
         )} -exclude-examples`;
 
         var { stdout, stderr } = await exec(cmd);
+        // convert yaml to json
+
+        stdout = yaml_to_json.load(stdout);
+
         var diffs = fs.readFileSync(join(path, ".diffs.json"));
         diffs = JSON.parse(diffs);
         diffs.push({
@@ -42,15 +48,18 @@ async function computeDiff(path) {
           commit_date: api_commits[i].commit_date,
         });
 
+
+
+
         fs.writeFileSync(join(path, ".diffs.json"), JSON.stringify(diffs));
 
         // diff 2 -check-breaking
         var cmd_2 = `oasdiff -check-breaking -base  ${join(
           path,
-          api_commits[i].hash + "."+api_commits[i].fileExtension
+          api_commits[i].hash + "." + api_commits[i].fileExtension
         )} -revision ${join(
           path,
-          api_commits[i + 1].hash +"."+ api_commits[i + 1].fileExtension
+          api_commits[i + 1].hash + "." + api_commits[i + 1].fileExtension
         )} -exclude-examples  -format json`;
 
         var { stdout, stderr } = await exec(cmd_2);
@@ -64,7 +73,7 @@ async function computeDiff(path) {
           commit_date: api_commits[i].commit_date,
         });
       } catch (error) {
-        console.log(error);
+        // console.log(error);
       }
 
       if (i < api_commits.length) {

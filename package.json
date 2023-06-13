@@ -27,7 +27,12 @@
   "homepage": "https://github.com/souhailaS/WEB-API-EVOLUTION-VISUALIZATIONS-CLI#readme",
   "dependencies": {
     "@apidevtools/swagger-parser": "^10.1.0",
+    "canvas": "^2.11.2",
     "commander": "^10.0.1",
+    "echarts": "^5.4.2",
+    "ejs": "^3.1.9",
+    "jsdom": "^22.1.0",
+    "semver": "^7.5.1",
     "simple-git": "^3.19.0"
   }
 }

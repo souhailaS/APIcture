@@ -4,7 +4,6 @@
  */
 
 import { execSync } from "child_process";
-// create directory
 import fs from "fs";
 import { join } from "path";
 import SwaggerParser from "@apidevtools/swagger-parser";
@@ -76,7 +75,8 @@ var previousVersions = await getPreviousVersionsOfFile(
 
 var data = previousVersions.map((version) => {
   return {
-    commit_date: version.date,
+    // version.date, store the date in date format
+    commit_date:   new Date(version.date),
     hash: version.hash,
     fileExtension: version.fileExtension,
   };
@@ -86,9 +86,9 @@ previousVersions.sort((a, b) => {
   return new Date(a.date) - new Date(b.date);
 });
 
-fs.mkdirSync(join(REPO_PATH, "previous_versions"), { recursive: true });
+fs.mkdirSync(join(REPO_PATH, ".previous_versions"), { recursive: true });
 fs.writeFileSync(
-  join(REPO_PATH, "previous_versions", ".api_commits.json"),
+  join(REPO_PATH, ".previous_versions", ".api_commits.json"),
   JSON.stringify(data)
 );
 
@@ -96,7 +96,7 @@ previousVersions.forEach((version) => {
   fs.writeFileSync(
     join(
       REPO_PATH,
-      "previous_versions",
+      ".previous_versions",
       `${version.hash}.${version.fileExtension}`
     ),
     version.content

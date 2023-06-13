@@ -1,8 +1,11 @@
-import { writeFileSync } from "fs";
-import { MongoClient } from "mongodb";
+import fs from "fs";
+import ejs from "ejs";
 import semver, { sort } from "semver";
 import path, { join } from "path";
+import echarts from "echarts";
+import { createCanvas, loadImage } from "canvas";
 import { fileURLToPath } from "url";
+import SwaggerParser from "@apidevtools/swagger-parser";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -11,9 +14,12 @@ async function createSunburst(
   data,
   previous_version,
   color_dict,
-  breakings
+  breakings,
+  non_breakings,
+  content
 ) {
   // month name
+
   var month = commit.commit_date.toLocaleString("default", { month: "short" });
   var year = commit.commit_date.getFullYear();
   var day = commit.commit_date.getDate();
@@ -104,7 +110,10 @@ async function createSunburst(
     commit_time = time_data;
   }
 
-  var version = commit.content.info.version;
+  console.log(commit);
+
+  console.log(content);
+  var version = content.info.version;
 
   var commit_version = {
     name: version,
@@ -164,15 +173,15 @@ async function createSunburst(
   };
 
   var total_changes = 0;
-  var breakingChanges = breakings.find((d) => d.sha == commit.sha);
-  if (breakingChanges.length > 0) {
-    total_changes += breakingChanges.length;
-    breaking.value = breakingChanges.length;
+  var breakingChanges = breakings.find((d) => d.hash == commit.hash);
+  if (breakingChanges?.breaking.length > 0) {
+    total_changes += breakingChanges.breaking.length;
+    breaking.value = breakingChanges.breaking.length;
 
     // breaking.name = "Breaking Changes";
 
     try {
-      breakingChanges.forEach((diff) => {
+      breakingChanges.breaking.forEach((diff) => {
         var breaking_change = {
           name: diff.id
             .replaceAll(/-/g, " ")
@@ -218,18 +227,21 @@ async function createSunburst(
     // value: 1,
   };
 
-  if (commit.nonBreakingChanges) {
+  var non_breaking_changes_arr = non_breakings.find(
+    (d) => d.hash == commit.hash
+  );
+  if (non_breaking_changes_arr) {
     // number of non breaking changes
-    var non_breaking_changes = Object.values(commit.nonBreakingChanges).reduce(
-      (a, b) => a + b,
-      0
-    );
+    var non_breaking_changes = Object.values(
+      non_breaking_changes_arr.nonBreakingChanges
+    ).reduce((a, b) => a + b, 0);
 
+    console.log(non_breaking_changes);
     non_breaking.value = non_breaking_changes;
 
     // filter the non breaking changes
     var non_breaking_changes_data = Object.entries(
-      commit.nonBreakingChanges
+      non_breaking_changes_arr.nonBreakingChanges
     ).filter(([key, value]) => value > 0);
 
     non_breaking_changes_data.forEach((diff) => {
@@ -283,13 +295,19 @@ function generateGrayGradient(maxNumber) {
 }
 
 async function main(path) {
-  var commits = fs.readFileSync(join(path, ".commits.json"));
+  var data = [];
+  var commits = fs.readFileSync(join(path, ".api_commits.json"));
   commits = JSON.parse(commits);
 
-  var breakings = fs.readFileSync(join(path, ".breakings.json"));
+  var breakings = fs.readFileSync(join(path, ".breaking.json"));
   breakings = JSON.parse(breakings);
 
+  var nonBreaking = fs.readFileSync(join(path, ".non-breaking.json"));
+  nonBreaking = JSON.parse(nonBreaking);
+
   var years = commits.map((commit) => {
+    // parse the date
+    commit.commit_date = new Date(commit.commit_date);
     return commit.commit_date.getFullYear();
   });
 
@@ -309,18 +327,220 @@ async function main(path) {
   var nextCommit = async function (commit) {
     var previous_version = null;
     console.log(i);
+
     if (i > 0) {
-      previous_version = commits[i - 1].content.info.version;
+      var previous_content = await SwaggerParser.parse(
+        join(path, commits[i - 1].hash + "." + commit.fileExtension)
+      );
+      previous_version = previous_content.info.version;
     }
     i = i + 1;
-    await createSunburst(commit, data, previous_version, color_dict);
+    console.log(commit);
+    var content = await SwaggerParser.parse(
+      join(path, commit.hash + "." + commit.fileExtension)
+    );
+
+    await createSunburst(
+      commit,
+      data,
+      previous_version,
+      color_dict,
+      breakings,
+      nonBreaking,
+      content
+    );
     if (i < commits.length) {
       return await nextCommit(commits[i]);
     } else {
-      console.log(data);
-      return data;
+      let chartOptions = {
+        grid: {
+          width: "100%",
+        },
+        // visualMap: {
+        //     type: 'continuous',
+        //     min: 0,
+        //     max: 30000,
+        //     inRange: {
+        //         color: ['#2F93C8', '#AEC48F', '#FFDB5C', '#F98862']
+        //     }
+        // },
+        toolbox: {
+          orient: "horizontal",
+          show: true,
+          itemSize: 17,
+          itemGap: 15,
+          feature: {
+            saveAsImage: {
+              show: true,
+              title: "Save as PNG",
+              pixelRatio: 2.5,
+            },
+            restore: {
+              show: true,
+              title: "Restore",
+            },
+          },
+        },
+
+        tooltip: {
+          trigger: "item",
+          triggerOn: "mousemove",
+          formatter: function (params) {
+            // show name and value
+            return params.data.name + ": " + params.data.value;
+          },
+        },
+        grid: {
+          width: "100%",
+        },
+        calculable: false,
+        series: {
+          roam: true,
+          center: ["50%", "50%"],
+          radius: ["5%", "85%"],
+          type: "sunburst",
+          data: data,
+          label: {
+            overflow: "truncate",
+            ellipsis: true,
+          },
+          labelLayout: {
+            hideOverlap: true,
+          },
+        },
+      };
+
+      chartOptions.series.sort = undefined;
+      chartOptions.series.levels = [
+        {},
+        {
+          r0: "3%",
+          r: "11%",
+          label: {
+            // bold labels
+            // fontWeight: 'bold'
+            fontSize: 10,
+            minAngle: 10,
+          },
+        },
+        {
+          r0: "11%",
+          r: "18%",
+          label: {
+            // bold labels
+            // fontWeight: 'bold'
+            fontSize: 10,
+            minAngle: 10,
+          },
+        },
+        {
+          // reduce rings width
+          r0: "18%",
+          r: "25%",
+          label: {
+            rotate: "tangential",
+            fontSize: 10,
+            minAngle: 10,
+          },
+        },
+        {
+          // reduce rings width
+          r0: "25%",
+          r: "34%",
+
+          //label font  size
+          label: {
+            fontSize: 7,
+            minAngle: 10,
+          },
+        },
+        {
+          // reduce rings width
+          r0: "34%",
+          r: "42%",
+          label: {
+            // bold labels
+            // fontWeight: 'bold'
+            // rotate: "tangential",
+
+            // ifCondition: {
+            //   minAngle: 10,
+
+            // },
+
+            fontSize: 9,
+          },
+        },
+        {
+          r0: "42%",
+          r: "44%",
+          itemStyle: {
+            borderWidth: 1,
+          },
+          label: {
+            show: false,
+            rotate: "tangential",
+          },
+        },
+
+        {
+          r0: "44%",
+          r: "45%",
+          label: {
+            position: "outside",
+            padding: 0,
+            silent: false,
+            fontSize: 9,
+          },
+          itemStyle: {
+            borderWidth: 2,
+          },
+        },
+      ];
+
+      fs.writeFileSync(
+        join(path, ".sunburst-source.json"),
+        JSON.stringify(chartOptions, null, 2)
+      );
+
+      // render js file
+      var template = fs.readFileSync(
+        join("bin/templates/sunburst.ejs"),
+        "utf8",
+        (err, template) => {
+          if (err) {
+            console.error("Error reading template:", err);
+            return;
+          }
+        }
+      );
+      var rendered = ejs.render(template, {
+        chartOptions: JSON.parse(JSON.stringify(chartOptions)),
+      });
+
+      if (!fs.existsSync(join(path, "..", "apivol-outputs"))) {
+        fs.mkdirSync(join(path, "..", "apivol-outputs"), { recursive: true });
+      }
+      fs.writeFileSync(
+        join(path,"..", "apivol-outputs", "sunburst.html"),
+        rendered,
+        "utf8",
+        (err) => {
+          if (err) {
+            console.error("Error saving output:", err);
+          } else {
+            console.log("Output saved as", { outputPath });
+          }
+        }
+      );
+
+      return chartOptions;
     }
   };
 
   await nextCommit(commits[i]);
 }
+
+main(
+  "/Users/souhailaserbout/git/WEB-API-EVOLUTION-VISUALIZATIONS-CLI/test_repos/schema/previous_versions"
+);

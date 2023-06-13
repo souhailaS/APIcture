@@ -6,7 +6,13 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function createSunburst(commit, data, previous_version, color_dict) {
+async function createSunburst(
+  commit,
+  data,
+  previous_version,
+  color_dict,
+  breakings
+) {
   // month name
   var month = commit.commit_date.toLocaleString("default", { month: "short" });
   var year = commit.commit_date.getFullYear();
@@ -98,7 +104,7 @@ async function createSunburst(commit, data, previous_version, color_dict) {
     commit_time = time_data;
   }
 
-  var version = commit.extracted_versions?.info_version;
+  var version = commit.content.info.version;
 
   var commit_version = {
     name: version,
@@ -158,15 +164,15 @@ async function createSunburst(commit, data, previous_version, color_dict) {
   };
 
   var total_changes = 0;
-
-  if (commit.diff_2?.length > 0) {
-    total_changes += commit.diff_2.length;
-    breaking.value = commit.diff_2.length;
+  var breakingChanges = breakings.find((d) => d.sha == commit.sha);
+  if (breakingChanges.length > 0) {
+    total_changes += breakingChanges.length;
+    breaking.value = breakingChanges.length;
 
     // breaking.name = "Breaking Changes";
 
     try {
-      commit.diff_2.forEach((diff) => {
+      breakingChanges.forEach((diff) => {
         var breaking_change = {
           name: diff.id
             .replaceAll(/-/g, " ")
@@ -261,7 +267,6 @@ async function createSunburst(commit, data, previous_version, color_dict) {
   return data;
 }
 
-
 function generateGrayGradient(maxNumber) {
   var gradient = [];
 
@@ -277,23 +282,27 @@ function generateGrayGradient(maxNumber) {
   return gradient;
 }
 
+async function main(path) {
+  var commits = fs.readFileSync(join(path, ".commits.json"));
+  commits = JSON.parse(commits);
 
+  var breakings = fs.readFileSync(join(path, ".breakings.json"));
+  breakings = JSON.parse(breakings);
 
-
-var years = commits.map((commit) => {
+  var years = commits.map((commit) => {
     return commit.commit_date.getFullYear();
   });
-  
+
   // get the unique years
   years = [...new Set(years)];
-  
+
   var colors = generateGrayGradient(years.length);
   // assign a color to each year
   var color_dict = {};
   years.forEach((year, index) => {
     color_dict[year] = colors[index];
   });
-  
+
   console.log(colors);
   console.log(commits.length);
   var i = 0;
@@ -301,17 +310,17 @@ var years = commits.map((commit) => {
     var previous_version = null;
     console.log(i);
     if (i > 0) {
-      previous_version = commits[i - 1].extracted_versions?.info_version;
+      previous_version = commits[i - 1].content.info.version;
     }
     i = i + 1;
     await createSunburst(commit, data, previous_version, color_dict);
     if (i < commits.length) {
       return await nextCommit(commits[i]);
-    }
-    else{
+    } else {
       console.log(data);
       return data;
     }
   };
-  
+
   await nextCommit(commits[i]);
+}

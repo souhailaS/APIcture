@@ -74,19 +74,31 @@ var previousVersions = await getPreviousVersionsOfFile(
   validOAS[0].oaspath
 );
 
+var data = previousVersions.map((version) => {
+  return {
+    commit_date: version.date,
+    hash: version.hash,
+    fileExtension: version.fileExtension,
+  };
+});
+
+previousVersions.sort((a, b) => {
+  return new Date(a.date) - new Date(b.date);
+});
+
 fs.mkdirSync(join(REPO_PATH, "previous_versions"), { recursive: true });
 fs.writeFileSync(
   join(REPO_PATH, "previous_versions", ".api_commits.json"),
-  JSON.stringify(
-    previousVersions.map((version) => {
-      return { commit_date: version.date, hash: version.hash, fileExtension: version.fileExtension };
-    })
-  )
+  JSON.stringify(data)
 );
 
 previousVersions.forEach((version) => {
   fs.writeFileSync(
-    join(REPO_PATH, "previous_versions", `${version.hash}.${version.fileExtension}`),
+    join(
+      REPO_PATH,
+      "previous_versions",
+      `${version.hash}.${version.fileExtension}`
+    ),
     version.content
   );
 });

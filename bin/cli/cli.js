@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * This script uses commander to create the CLI tool for generating Evolution visualizations.
  * The CLI tool can be used to generate visualizations for a given repository.
@@ -14,19 +15,22 @@
  *
  */
 
-import { Command } from "commander";
+import { Command } from 'commander';
+const program = new Command();
 import { execSync } from "child_process";
 import { fetchHistory } from "../fetch_history.js";
 import { computeDiff} from "../oasdiff.js";
 import { generateChangesViz } from "../create_sunburst.js";
-const program = new Command();
+
 
 program.name("apivol").description("CLI").version("0.0.1");
 
 program
-  .command("changes")
-  .description("Generate changes visualization")
-  .option("-r, --repo <path>", "Path to the repository")
+  .command("versioning")
+  .description("Generate API Changes vs API Versioning Sunburst Visualization")
+  .option("-r, --repo <path>", "Path to the repository. Defaults to current working directory.")
+  .option("-o, --output <path>", "Path to the output directory")
+  .option("-f, --format <format>", "Output format")
   .action(async (options) => {
     const repoPath = options.repo || process.cwd();
     try {
@@ -38,6 +42,24 @@ program
         console.log(err);
     }
     
+  });
+
+program
+  .command("changes")
+  .description("Generate changes visualization")
+  .option("-r, --repo <path>", "Path to the repository. Defaults to current working directory.")
+  .option("-o, --output <path>", "Path to the output directory")
+  .option("-f, --format <format>", "Output format")
+  .action(async (options) => {
+    const repoPath = options.repo || process.cwd();
+    try {
+    // await fetchHistory(repoPath);
+    // await computeDiff(repoPath);
+    // await generateChangesViz(repoPath);
+      console.log("changes");
+    } catch (err) {
+
+    }
   });
 
 program.parse(process.argv);

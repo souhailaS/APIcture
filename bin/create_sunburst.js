@@ -11,7 +11,6 @@ const __dirname = path.dirname(__filename);
 import chalk from "chalk";
 import open from "open";
 
-
 async function createSunburst(
   commit,
   data,
@@ -113,7 +112,6 @@ async function createSunburst(
     commit_time = time_data;
   }
 
-
   var version = content.info.version;
 
   var commit_version = {
@@ -131,7 +129,6 @@ async function createSunburst(
   };
 
   if (semver.valid(version) && semver.valid(previous_version)) {
-
     if (previous_version) {
       // if minore version
       if (semver.diff(previous_version, version) == "minor") {
@@ -320,7 +317,6 @@ export async function generateChangesViz(path, format) {
   years.forEach((year, index) => {
     color_dict[year] = colors[index];
   });
-
 
   var i = 0;
   var nextCommit = async function (commit) {
@@ -515,117 +511,131 @@ export async function generateChangesViz(path, format) {
         join(path, ".sunburst-source.json"),
         JSON.stringify(chartOptions, null, 2)
       );
-      fs.writeFileSync(
-        join(path, ".sunburst.ejs"),
-        `<!DOCTYPE html>
-  <html>
-    <head>
-      <title>ECharts Chart</title>
-      <style>
-        /* Add any custom CSS styles here */
-      </style>
-    </head>
-    <body>
-      <div id="chartContainer" style="height: 100vh"></div>
-      <!-- import echart from online  -->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/4.1.0/echarts.min.js"></script>
-      <script>
-                // Initialize ECharts chart with the container element
-                var chartContainer = document.getElementById('chartContainer');
-                var chart = echarts.init(chartContainer, null, {
-                  renderer: 'svg'
-                });
-  
-                // Set the chart options and data
-                var chartOptions = <%-JSON.stringify(JSON.parse(JSON.stringify(chartOptions))) %>;
-                chart.setOption(chartOptions);
-  
-  
-                let format = "<%=format %>";
-                if(format != "svg"){
-  
-                 // Convert the chart to a data URL
-                 var dataURL = chart.getDataURL({
-                      type: format, // Support png and jpeg only
-                      pixelRatio: 2, // Increase pixelRatio for higher resolution
-                      backgroundColor: "#fff", // Set background color, if desired
-                    });
-  
-                    // Create a link element
-                    var link = document.createElement("a");
-                    link.href = dataURL;
-                    link.download = "chart."+format;
-  
-                    // Programmatically trigger the click event to download the image
-                    link.click();
-                  }
-  
-                
-  
-  
-  
-  
-        
-      </script>
-    </body>
-  </html>`
-      );
-      // if (format == "html") {
-      var template = fs.readFileSync(
-        join(path,".sunburst.ejs"),
-        "utf8",
-        (err, template) => {
-          if (err) {
-            console.error("Error reading template:", err);
-            return;
-          }
-        }
-      );
 
-      // delete the template file
-     
-
-      var rendered = ejs.render(template, {
-        chartOptions: JSON.parse(JSON.stringify(chartOptions)),
-        format: format,
-      });
-
-      // fs.unlinkSync(join(path, ".sunburst.ejs"));
-
-      if (!fs.existsSync(join(path, "..", "apivol-outputs"))) {
-        fs.mkdirSync(join(path, "..", "apivol-outputs"), { recursive: true });
-      }
-      fs.writeFileSync(
-        join(path, "..", "apivol-outputs", "sunburst.html"),
-        rendered,
-        "utf8",
-        (err) => {
-          if (err) {
-            console.error("Error saving output:", err);
-          } else {
-            console.log("Output saved as", { outputPath });
-          }
-        }
-      );
-      // }
-
-      // PNG output
-      if (format == "png") {
-      }
-
-      // SVG output
-      if (format == "svg") {
-      }
-
-      // console log link to the output html file
-      console.log(chalk.greenBright.underline.bold.italic(
-        "|- Output Visualization saved as: ",
-        join(path, "..", "apivol-outputs", "sunburst.html"))
-      );
-      open(join(path, "..", "apivol-outputs", "sunburst.html"));
+      renderSunburst(chartOptions, format, path);
       return chartOptions;
     }
   };
 
   await nextCommit(commits[i]);
+}
+function renderSunburst(chartOptions, format, path) {
+  if (format == "html") {
+    fs.writeFileSync(
+      join(path, ".sunburst.ejs"),
+      `<!DOCTYPE html>
+      <html>
+      <head>
+        <title>API Channges vs. API versioning</title>
+        <style>
+          /* Add any custom CSS styles here */
+        </style>
+      </head>
+      <body>
+        <div id="chartContainer" style="height: 100vh"></div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/4.1.0/echarts.min.js"></script>
+        <script>
+                  // Initialize ECharts chart with the container element
+                  var chartContainer = document.getElementById('chartContainer');
+                  var chart = echarts.init(chartContainer, null, {
+                    renderer: 'svg'
+                  });
+                  var chartOptions = <%-JSON.stringify(JSON.parse(JSON.stringify(chartOptions))) %>;
+                  chart.setOption(chartOptions);
+         </script>
+      </body>
+      </html>`
+    );
+    // if (format == "html") {
+    var template = fs.readFileSync(
+      join(path, ".sunburst.ejs"),
+      "utf8",
+      (err, template) => {
+        if (err) {
+          console.error("Error reading template:", err);
+          return;
+        }
+      }
+    );
+
+    // delete the template file
+
+    var rendered = ejs.render(template, {
+      chartOptions: JSON.parse(JSON.stringify(chartOptions)),
+      format: format,
+    });
+
+    // fs.unlinkSync(join(path, ".sunburst.ejs"));
+
+    if (!fs.existsSync(join(path, "..", "apivol-outputs"))) {
+      fs.mkdirSync(join(path, "..", "apivol-outputs"), { recursive: true });
+    }
+    fs.writeFileSync(
+      join(path, "..", "apivol-outputs", "sunburst.html"),
+      rendered,
+      "utf8",
+      (err) => {
+        if (err) {
+          console.error("Error saving output:", err);
+        } else {
+          console.log("Output saved as", { outputPath });
+        }
+      }
+    );
+  }
+
+  // PNG output
+  if (format == "png") {
+    const canvas = createCanvas(800, 600);
+    // ECharts can use the Canvas instance created by node-canvas as a container directly
+    const chart = echarts.init(canvas);
+    chart.setOption(chartOptions);
+    const buffer = canvas.toBuffer("image/png");
+    fs.writeFileSync(
+      join(path, "..", "apivol-outputs", "sunburst.png"),
+      buffer,
+      "utf8",
+      (err) => {
+        if (err) {
+          console.error("Error saving output:", err);
+        } else {
+          console.log("Output saved as", { outputPath });
+        }
+      }
+    );
+  }
+
+  // SVG output
+  if (format == "svg") {
+    const chart = echarts.init(null, null, {
+      renderer: "svg", // must use SVG rendering mode
+      ssr: true, // enable SSR
+      width: 400, // need to specify height and width
+      height: 300,
+    });
+
+    chart.setOption(chartOptions);
+    const svgStr = chart.renderToSVGString();
+    fs.writeFileSync(
+      join(path, "..", "apivol-outputs", "sunburst.svg"),
+      svgStr,
+      "utf8",
+      (err) => {
+        if (err) {
+          console.error("Error saving output:", err);
+        } else {
+          console.log("Output saved as", { outputPath });
+        }
+      }
+    );
+  }
+
+  // console log link to the output html file
+  console.log(
+    chalk.greenBright.underline.bold.italic(
+      "|- Output Visualization saved as: ",
+      join(path, "..", "apivol-outputs", "sunburst.html")
+    )
+  );
+  open(join(path, "..", "apivol-outputs", "sunburst.html"));
 }

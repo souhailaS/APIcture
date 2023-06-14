@@ -1,4 +1,4 @@
-function computeFieldFrequency(jsonArray) {
+export function computeFieldFrequency(jsonArray) {
   jsonArray = jsonArray
     .map((diff) => {
       return diff.diff;

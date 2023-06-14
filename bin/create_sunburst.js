@@ -350,45 +350,6 @@ export async function generateChangesViz(path, format) {
         grid: {
           width: "100%",
         },
-        // visualMap: {
-        //     type: 'continuous',
-        //     min: 0,
-        //     max: 30000,
-        //     inRange: {
-        //         color: ['#2F93C8', '#AEC48F', '#FFDB5C', '#F98862']
-        //     }
-        // },
-        toolbox: {
-          orient: "horizontal",
-          show: true,
-          itemSize: 17,
-          itemGap: 15,
-          feature: {
-            saveAsImage: {
-              show: true,
-              title: "Save as PNG",
-              pixelRatio: 3,
-            },
-            restore: {
-              show: true,
-              title: "Restore",
-            },
-            // // save as svg
-            // myTool1: {
-            //   show: true,
-            //   title: "Save as SVG",
-            //   icon:
-            //     "path://M864 128H160c-17.7 0-32 14.3-32 32v704c0 " +
-            //     "17.7 14.3 32 32 32h704c17.7 0 32-14.3 " +
-            //     "32-32V160c0-17.7-14.3-32-32-32zM640 " +
-            //     "704H384v-96h256v96zM640 512H384v-96h256v96zM640 " +
-            //     "320H384v-96h256v96zM736 864H288V160h448v704z " +
-            //     "m-192-96h96v-96h-96v96z",
-            //   onclick: function () {
-            //   }
-          },
-        },
-
         tooltip: {
           trigger: "item",
           triggerOn: "mousemove",
@@ -397,6 +358,7 @@ export async function generateChangesViz(path, format) {
             return params.data.name + ": " + params.data.value;
           },
         },
+
         grid: {
           width: "100%",
         },
@@ -466,16 +428,14 @@ export async function generateChangesViz(path, format) {
           r0: "34%",
           r: "42%",
           label: {
-            // bold labels
-            // fontWeight: 'bold'
-            // rotate: "tangential",
-
-            // ifCondition: {
-            //   minAngle: 10,
-
-            // },
-
+            color: "#000000",
             fontSize: 9,
+          },
+          itemStyle: {
+            // shadow blur
+            shadowBlur: 1,
+            // shadow color grey
+            shadowColor: "rgba(0, 0, 0, 0.5)",
           },
         },
         {
@@ -499,7 +459,7 @@ export async function generateChangesViz(path, format) {
             silent: false,
             fontSize: 11,
             color: "#000000",
-            fontWeight: "bold",
+            // fontWeight: "bold",
           },
           itemStyle: {
             borderWidth: 2,
@@ -520,7 +480,25 @@ export async function generateChangesViz(path, format) {
   await nextCommit(commits[i]);
 }
 function renderSunburst(chartOptions, format, path) {
-  if (format == "html") {
+  if (format == "html" || !format) {
+    chartOptions.toolbox = {
+      orient: "horizontal",
+      show: true,
+      itemSize: 17,
+      itemGap: 15,
+      feature: {
+        saveAsImage: {
+          show: true,
+          title: "Save as PNG",
+          pixelRatio: 3,
+        },
+        restore: {
+          show: true,
+          title: "Restore",
+        },
+      },
+    };
+
     fs.writeFileSync(
       join(path, ".sunburst.ejs"),
       `<!DOCTYPE html>
@@ -537,9 +515,7 @@ function renderSunburst(chartOptions, format, path) {
         <script>
                   // Initialize ECharts chart with the container element
                   var chartContainer = document.getElementById('chartContainer');
-                  var chart = echarts.init(chartContainer, null, {
-                    renderer: 'svg'
-                  });
+                  var chart = echarts.init(chartContainer);
                   var chartOptions = <%-JSON.stringify(JSON.parse(JSON.stringify(chartOptions))) %>;
                   chart.setOption(chartOptions);
          </script>
@@ -558,14 +534,10 @@ function renderSunburst(chartOptions, format, path) {
       }
     );
 
-    // delete the template file
-
     var rendered = ejs.render(template, {
       chartOptions: JSON.parse(JSON.stringify(chartOptions)),
       format: format,
     });
-
-    // fs.unlinkSync(join(path, ".sunburst.ejs"));
 
     if (!fs.existsSync(join(path, "..", "apivol-outputs"))) {
       fs.mkdirSync(join(path, "..", "apivol-outputs"), { recursive: true });
@@ -582,27 +554,46 @@ function renderSunburst(chartOptions, format, path) {
         }
       }
     );
+    // console log link to the output html file
+    console.log(
+      chalk.greenBright.underline.bold(
+        "|- Output Visualization saved as: ",
+        join(path, "..", "apivol-outputs", "sunburst.html")
+      )
+    );
+    open(join(path, "..", "apivol-outputs", "sunburst.html"));
   }
 
   // PNG output
   if (format == "png") {
-    const canvas = createCanvas(800, 600);
+    const canvas = createCanvas(800, 800);
     // ECharts can use the Canvas instance created by node-canvas as a container directly
     const chart = echarts.init(canvas);
     chart.setOption(chartOptions);
-    const buffer = canvas.toBuffer("image/png");
+    // render then  as png with good quality with high pixel density and white background
+    const buffer = canvas.toBuffer("image/png", {
+      compressionLevel: 9,
+      filters: canvas.PNG_FILTER_NONE,
+      resolution: 900,
+      background: "#ffffff",
+    });
+
+    if (!fs.existsSync(join(path, "..", "apivol-outputs"))) {
+      fs.mkdirSync(join(path, "..", "apivol-outputs"), { recursive: true });
+    }
     fs.writeFileSync(
       join(path, "..", "apivol-outputs", "sunburst.png"),
-      buffer,
-      "utf8",
-      (err) => {
-        if (err) {
-          console.error("Error saving output:", err);
-        } else {
-          console.log("Output saved as", { outputPath });
-        }
-      }
+      buffer
     );
+
+    console.log(
+      chalk.greenBright.underline.bold(
+        "|- Output Visualization saved as: " +
+          join(path, "..", "apivol-outputs", "sunburst.png")
+      )
+    );
+
+    // open(join(path, "..", "apivol-outputs", "sunburst.png"));
   }
 
   // SVG output
@@ -610,8 +601,8 @@ function renderSunburst(chartOptions, format, path) {
     const chart = echarts.init(null, null, {
       renderer: "svg", // must use SVG rendering mode
       ssr: true, // enable SSR
-      width: 400, // need to specify height and width
-      height: 300,
+      width: 500, // need to specify height and width
+      height: 500,
     });
 
     chart.setOption(chartOptions);
@@ -628,14 +619,16 @@ function renderSunburst(chartOptions, format, path) {
         }
       }
     );
+    console.log(
+      chalk.greenBright.underline.bold(
+        "|- Output Visualization saved as: " +
+          join(path, "..", "apivol-outputs", "sunburst.svg")
+      )
+    );
+    // exit process
+    process.exit(0);
+    // open(join(path, "..", "apivol-outputs", "sunburst.svg"));
   }
 
-  // console log link to the output html file
-  console.log(
-    chalk.greenBright.underline.bold(
-      "|- Output Visualization saved as: ",
-      join(path, "..", "apivol-outputs", "sunburst.html")
-    )
-  );
-  open(join(path, "..", "apivol-outputs", "sunburst.html"));
+  return;
 }

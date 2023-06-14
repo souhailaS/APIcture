@@ -19,34 +19,7 @@
 
               // Set the chart options and data
               var chartOptions = <%-JSON.stringify(JSON.parse(JSON.stringify(chartOptions))) %>;
-              chart.setOption(chartOptions);
-
-
-              let format = "<%=format %>";
-              if(format != "svg"){
-
-               // Convert the chart to a data URL
-               var dataURL = chart.getDataURL({
-                    type: format, // Support png and jpeg only
-                    pixelRatio: 2, // Increase pixelRatio for higher resolution
-                    backgroundColor: "#fff", // Set background color, if desired
-                  });
-
-                  // Create a link element
-                  var link = document.createElement("a");
-                  link.href = dataURL;
-                  link.download = "chart."+format;
-
-                  // Programmatically trigger the click event to download the image
-                  link.click();
-                }
-
-              
-
-
-
-
-      
+              chart.setOption(chartOptions);      
     </script>
   </body>
 </html>

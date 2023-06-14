@@ -1,6 +1,6 @@
 {
-  "name": "apivol",
-  "version": "0.0.1",
+  "name": "apict",
+  "version": "0.0.2",
   "description": "A CLI tool for web API evolution visualization",
   "main": "index.js",
   "private": false,
@@ -39,7 +39,7 @@
     "simple-git": "^3.19.0"
   },
   "bin": {
-    "apivol": "bin/cli/cli.js"
+    "apict": "bin/cli/cli.js"
   },
   "devDependencies": {}
 }

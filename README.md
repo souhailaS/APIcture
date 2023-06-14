@@ -1,24 +1,24 @@
 # WEB-API-EVOLUTION-VISUALIZATIONS-CLI
-## What is apivol?
-The apivol tool is a command-line interface (CLI) tool designed to provide visualization support for understanding the evolution of Web APIs. It enables users to generate insightful visualizations that highlight changes, version upgrades, and metrics associated with API development and evolution. The tool is particularly useful for tracking and analyzing the history of OpenAPI specifications stored in a Git repository, but it also supports generating visualizations directly from code repositories without OpenAPI descriptions.
+## What is APICT?
+The apict tool is a command-line interface (CLI) tool designed to provide visualization support for understanding the evolution of Web APIs. It enables users to generate insightful visualizations that highlight changes, version upgrades, and metrics associated with API development and evolution. The tool is particularly useful for tracking and analyzing the history of OpenAPI specifications stored in a Git repository, but it also supports generating visualizations directly from code repositories without OpenAPI descriptions.
 
-## How to Use apivol?
-To use the apivol tool, follow these steps:
+## How to Use apict?
+To use the apict tool, follow these steps:
 
-Install the apivol tool using `npm install apivol` <span style="color: red;"> [still not available publicly yet] an initial version will be there soon</span>
+Install the apict tool using `npm install apict` <span style="color: red;"> [still not available publicly yet] an initial version will be there soon</span>
 
- 1. Run the `apivol` command followed by the desired subcommand to generate the desired visualizations. The available subcommands include:
+ 1. Run the `apict` command followed by the desired subcommand to generate the desired visualizations. The available subcommands include:
 
-   - `apivol <spec-path>`: Generates the visualizations for the OpenAPI specification located at the specified path.
-   - `apivol changes <spec-path>`: Focuses specifically on changes localization.
-   - `apivol versioning <spec-path>`: Analyzes version upgrades versus changes types.
-   - `apivol metrics`: Generates visualizations for API metrics.
+   - `apict <spec-path>`: Generates the visualizations for the OpenAPI specification located at the specified path.
+   - `apict changes <spec-path>`: Focuses specifically on changes localization.
+   - `apict versioning <spec-path>`: Analyzes version upgrades versus changes types.
+   - `apict metrics`: Generates visualizations for API metrics.
 
 1. Specify any additional options or flags to customize the visualization output, such as the desired format (e.g., PDF, SVG, interactive HTML).
 
 ### Metrics Options
 
-When using the `apivol metrics` subcommand, you have the option to select specific API size metrics that you want to visualize the evolution of over time. 
+When using the `apict metrics` subcommand, you have the option to select specific API size metrics that you want to visualize the evolution of over time. 
 
 There are a set of available options of the `metrics` subcommand :
 
@@ -36,28 +36,28 @@ Feel free to explore the available metrics options and adapt them to your specif
 
 ## Examples of Usage
 
-Here are a few examples of how to use the `apivol` tool:
+Here are a few examples of how to use the `apict` tool:
 
 1. Visualize the changes in an OpenAPI specification:
    
 ```
-apivol changes -r /path/to/git-repo
+apict changes -r /path/to/git-repo
 ```
 
 2. Analyze the version upgrades and changes types in an OpenAPI specification:
    
 ```
-apivol versioning /path/to/git-repo
+apict versioning /path/to/git-repo
 ```
 
 3. Generate visualizations for API endpoints related metrics:
 
 ```
-apivol metrics --endpoints  /path/to/git-repo
+apict metrics --endpoints  /path/to/git-repo
 ```
 
 
 
-These examples illustrate some of the basic functionalities of the `apivol` tool. Feel free to explore the available options and adapt them to your specific needs to gain deeper insights into the evolution of your Web APIs.
+These examples illustrate some of the basic functionalities of the `apict` tool. Feel free to explore the available options and adapt them to your specific needs to gain deeper insights into the evolution of your Web APIs.
 
 ## Test

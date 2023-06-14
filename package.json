@@ -1,6 +1,6 @@
 {
   "name": "apict",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "description": "A CLI tool for web API evolution visualization",
   "main": "index.js",
   "private": false,
@@ -39,7 +39,6 @@
     "simple-git": "^3.19.0"
   },
   "bin": {
-    "apict": "bin/cli/cli.js"
-  },
-  "devDependencies": {}
+    "apict": "./bin/cli/cli.js"
+  }
 }

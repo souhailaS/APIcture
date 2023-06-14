@@ -1,22 +1,22 @@
-# WEB-API-EVOLUTION-VISUALIZATIONS-CLI
-## What is APICT?
-The apict tool is a command-line interface (CLI) tool designed to provide visualization support for understanding the evolution of Web APIs. It enables users to generate insightful visualizations that highlight changes, version upgrades, and metrics associated with API development and evolution. The tool is particularly useful for tracking and analyzing the history of OpenAPI specifications stored in a Git repository, but it also supports generating visualizations directly from code repositories without OpenAPI descriptions.
+# APIcture
+## What is APIcture?
+APIcture is a command-line interface (CLI) tool designed to provide visualization support for understanding the evolution of Web APIs. It enables users to generate insightful visualizations that highlight changes, version upgrades, and metrics associated with API development and evolution. The tool is particularly useful for tracking and analyzing the history of OpenAPI specifications stored in a Git repository, but it also supports generating visualizations directly from code repositories without OpenAPI descriptions.
 
-## How to Use apict?
+## How to Use APIcture?
 To use the apict tool, follow these steps:
 
-Install the apict tool using `npm install apict` <span style="color: red;"> [still not available publicly yet] an initial version will be there soon</span>
+1. Install the APIcture CLI tool using `npm install apict -g` 
 
- 1. Run the `apict` command followed by the desired subcommand to generate the desired visualizations. The available subcommands include:
+2. Run the `apict` command followed by the desired subcommand to generate the desired visualizations. The available subcommands include:
 
    - `apict <spec-path>`: Generates the visualizations for the OpenAPI specification located at the specified path.
    - `apict changes <spec-path>`: Focuses specifically on changes localization.
    - `apict versioning <spec-path>`: Analyzes version upgrades versus changes types.
    - `apict metrics`: Generates visualizations for API metrics.
 
-1. Specify any additional options or flags to customize the visualization output, such as the desired format (e.g., PDF, SVG, interactive HTML).
+3. Specify any additional options or flags to customize the visualization output, such as the desired format (e.g., PDF, SVG, interactive HTML).
 
-### Metrics Options
+#### Metrics Options
 
 When using the `apict metrics` subcommand, you have the option to select specific API size metrics that you want to visualize the evolution of over time. 
 
@@ -50,7 +50,11 @@ apict changes -r /path/to/git-repo
 apict versioning /path/to/git-repo
 ```
 
-3. Generate visualizations for API endpoints related metrics:
+![API change vs version changes](./changes-vs-versions.gif)
+
+
+
+1. Generate visualizations for API endpoints related metrics:
 
 ```
 apict metrics --endpoints  /path/to/git-repo
@@ -58,6 +62,6 @@ apict metrics --endpoints  /path/to/git-repo
 
 
 
-These examples illustrate some of the basic functionalities of the `apict` tool. Feel free to explore the available options and adapt them to your specific needs to gain deeper insights into the evolution of your Web APIs.
+These examples illustrate some of the basic functionalities of the APIcture tool. Feel free to explore the available options and adapt them to your specific needs to gain deeper insights into the evolution of your Web APIs.
 
-## Test
+<!-- ## Test -->

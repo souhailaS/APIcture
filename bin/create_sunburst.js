@@ -632,7 +632,7 @@ function renderSunburst(chartOptions, format, path) {
 
   // console log link to the output html file
   console.log(
-    chalk.greenBright.underline.bold.italic(
+    chalk.greenBright.underline.bold(
       "|- Output Visualization saved as: ",
       join(path, "..", "apivol-outputs", "sunburst.html")
     )

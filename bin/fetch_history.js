@@ -72,44 +72,45 @@ export const fetchHistory = async (repoPath) => {
   if (validOAS.length === 0) {
     // code 100
     var err = new Error("No OAS file found in the root directory of the repo");
-    err.code = "NoOASFileFound"
-    err.name = "NoOASFileFound"
+    err.code = "NoOASFileFound";
+    err.name = "NoOASFileFound";
     throw err;
-
   }
-  var previousVersions = await getPreviousVersionsOfFile(
-    repoPath,
-    validOAS[0].oaspath
-  );
-
-
-  var data = previousVersions.map((version) => {
-    return {
-      // version.date, store the date in date format
-      commit_date: new Date(version.date),
-      hash: version.hash,
-      fileExtension: version.fileExtension,
-    };
-  });
-
-  previousVersions.sort((a, b) => {
-    return new Date(a.date) - new Date(b.date);
-  });
-
-  fs.mkdirSync(join(repoPath, ".previous_versions"), { recursive: true });
-  fs.writeFileSync(
-    join(repoPath, ".previous_versions", ".api_commits.json"),
-    JSON.stringify(data)
-  );
-
-  previousVersions.forEach((version) => {
-    fs.writeFileSync(
-      join(
-        repoPath,
-        ".previous_versions",
-        `${version.hash}.${version.fileExtension}`
-      ),
-      version.content
+  if (validOAS.length == 1) {
+    console.log("|- One OAS file found in the root directory of the repo:" + validOAS[0].oaspath);
+    var previousVersions = await getPreviousVersionsOfFile(
+      repoPath,
+      validOAS[0].oaspath
     );
-  });
+
+    var data = previousVersions.map((version) => {
+      return {
+        // version.date, store the date in date format
+        commit_date: new Date(version.date),
+        hash: version.hash,
+        fileExtension: version.fileExtension,
+      };
+    });
+
+    previousVersions.sort((a, b) => {
+      return new Date(a.date) - new Date(b.date);
+    });
+
+    fs.mkdirSync(join(repoPath, ".previous_versions"), { recursive: true });
+    fs.writeFileSync(
+      join(repoPath, ".previous_versions", ".api_commits.json"),
+      JSON.stringify(data)
+    );
+
+    previousVersions.forEach((version) => {
+      fs.writeFileSync(
+        join(
+          repoPath,
+          ".previous_versions",
+          `${version.hash}.${version.fileExtension}`
+        ),
+        version.content
+      );
+    });
+  }
 };

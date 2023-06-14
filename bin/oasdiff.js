@@ -7,7 +7,6 @@ import path, { join } from "path";
 import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-// colored logs
 import chalk from "chalk";
 import cliProgress from "cli-progress";
 import colors from "ansi-colors";
@@ -29,7 +28,7 @@ export async function computeDiff(path) {
     // ascending order
     return new Date(a.commit_date) - new Date(b.commit_date);
   });
-  console.log(chalk.blue(`|- Found ${api_commits.length} commits`));
+  console.log(chalk.blue(`|- Found ${api_commits.length} commits changing OAS file`));
   console.log(
     // chalk.blue(
     //   `|-- From ${api_commits[0].commit_date} to ${

@@ -89,7 +89,7 @@ program
     try {
       await fetchHistory(repoPath);
       await computeDiff(repoPath);
-      await renderTree(repoPath);
+      await renderTree(repoPath, options.format);
       
     } catch (err) {
       console.log(err);

@@ -518,6 +518,11 @@ function renderSunburst(chartOptions, format, path) {
                   var chart = echarts.init(chartContainer);
                   var chartOptions = <%-JSON.stringify(JSON.parse(JSON.stringify(chartOptions))) %>;
                   chart.setOption(chartOptions);
+
+                  chart.setOption(chartOptions);
+                  window.addEventListener('resize', function() {
+                    chart.resize();
+                  });
          </script>
       </body>
       </html>`

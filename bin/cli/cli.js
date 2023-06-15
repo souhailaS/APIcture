@@ -25,7 +25,6 @@ import { renderTree } from "../create_changes_tree.js";
 
 import chalk from "chalk";
 
-
 // program.name("apict").description("CLI").version("0.0.1");
 
 program
@@ -68,7 +67,9 @@ program
       await fetchHistory(repoPath);
       console.log();
       await computeDiff(repoPath);
-      console.log(`|- Rendering sunburst chart in [${format.toUpperCase()}] format`);
+      console.log(
+        `|- Rendering sunburst chart in [${format.toUpperCase()}] format`
+      );
       await generateChangesViz(repoPath, format);
     } catch (err) {
       console.log(err);
@@ -84,13 +85,33 @@ program
   )
   .option("-o, --output <path>", "Path to the output directory")
   .option("-f, --format <format>", "Output format")
+  .option("-freq, --frequency <frequency>", "Minimum frequency of changes")
   .action(async (options) => {
     const repoPath = options.repo || process.cwd();
     try {
       await fetchHistory(repoPath);
       await computeDiff(repoPath);
       await renderTree(repoPath, options.format);
-      
+    } catch (err) {
+      console.log(err);
+    }
+  });
+
+program
+  .command("metrics")
+  .description("Generate metrics visualization")
+  .option(
+    "-r, --repo <path>",
+    "Path to the repository. Defaults to current working directory."
+  )
+  .option("-o, --output <path>", "Path to the output directory")
+  .option("-f, --format <format>", "Output format")
+  .action(async (options) => {
+    const repoPath = options.repo || process.cwd();
+    try {
+      await fetchHistory(repoPath);
+      await computeDiff(repoPath);
+      await renderTree(repoPath, options.format);
     } catch (err) {
       console.log(err);
     }

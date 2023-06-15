@@ -1,6 +1,11 @@
 import SwaggerParser from "@apidevtools/swagger-parser";
 import fs from "fs";
 import { join } from "path";
+import chalk from "chalk";
+import cliProgress from "cli-progress";
+import colors from "ansi-colors";
+
+
 const http_methods = [
   "get",
   "put",
@@ -18,8 +23,20 @@ export async function computeSizeMetrics(path) {
   var hashes = fs.readFileSync(join(path, ".api_commits.json"));
   var oasPaths = JSON.parse(hashes); //.map((h) => h.hash + "." + h.fileExtension);
 
+    // var bar = new cliProgress.SingleBar(
+    //     {
+    //         format: "|- Computing size metrics |" + colors.cyan("{bar}") + "| {percentage}% || {value}/{total} Chunks",
+    //         barCompleteChar: "\u2588",
+    //         barIncompleteChar: "\u2591",
+    //         hideCursor: true,
+    //     },
+    //     cliProgress.Presets.rect
+    // );
+    // bar.start(oasPaths.length-1, 0);
+
   var next = async (l) => {
     if (l < oasPaths.length) {
+        // bar.update(l);
       var api = await SwaggerParser.parse(
         join(path, oasPaths[l].hash + "." + oasPaths[l].fileExtension)
       );
@@ -57,7 +74,7 @@ export async function computeSizeMetrics(path) {
             }, [])
           : [];
 
-        console.log(methods);
+   
         var structureSize = {
           paths: Object.values(api.paths).length,
           operations: endpoints.length,
@@ -267,21 +284,23 @@ export async function computeSizeMetrics(path) {
           join(path, ".metrics.json"),
           JSON.stringify(metrics, null, 2)
         );
-        console.log(
-          `- Processing ${l}/${oasPaths.length} ( ${oasPaths[l].hash} )`
-        );
+        // console.log(
+        //   `- Processing ${l}/${oasPaths.length} ( ${oasPaths[l].hash} )`
+        // );
         l++;
         return await next(l);
       } else {
-        console.log("Done");
-        return;
+        // bar.stop();
+        // // exit code 0
+        // process.exit(0);
+        // // console.log("Done");
+        return ;
       }
     }
   };
 
-  return await next(0);
+   await next(0);
+   return fs.readFileSync(join(path, ".metrics.json"), "utf8");
+
 }
 
-await computeSizeMetrics(
-  "/Users/souhailaserbout/git/WEB-API-EVOLUTION-VISUALIZATIONS-CLI/test_repos/schema"
-);

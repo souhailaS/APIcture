@@ -1,6 +1,6 @@
 {
   "name": "apict",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "A CLI tool for web API evolution visualization",
   "main": "index.js",
   "private": false,
@@ -32,6 +32,7 @@
     "apict": "^0.0.4",
     "chartjs-node-canvas": "^4.1.6",
     "cli-progress": "^3.12.0",
+    "columnify": "^1.6.0",
     "commander": "^10.0.1",
     "echarts": "^5.4.2",
     "ejs": "^3.1.9",

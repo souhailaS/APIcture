@@ -8,7 +8,19 @@ var ejsTemp = `
   <head>
     <title>ECharts Chart</title>
     <style>
-      /* Add any custom CSS styles here */
+      /* Add any other custom CSS styles here */
+
+        #structure-metrics {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+        }
+        
+        #schema-metrics {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+        }
     </style>
   </head>
   <body>
@@ -33,34 +45,34 @@ var ejsTemp = `
     <!-- import echart from online  -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.1.2/echarts.min.js"></script>
     <script>  
-            if(<%=options.endpoints%>){
+            if(<%=options.endpoints%> || <%=!usedOptions%>){
             var myChart = echarts.init(document.getElementById("metrics-echart"));
             var chartOptions1 = <%-JSON.stringify(JSON.parse(JSON.stringify(option))) %>;
             myChart.setOption(chartOptions1);   
             }
-            if(<%=options.parameters%>){
+            if(<%=options.parameters%> || <%=!usedOptions%>){
             var myChart2 = echarts.init(document.getElementById("parameters-echart"));
             var chartOptions2 = <%-JSON.stringify(JSON.parse(JSON.stringify(option2))) %>;
             myChart2.setOption(chartOptions2);
             }
-            if(<%=options.methods%>){
+            if(<%=options.methods%> || <%=!usedOptions%>){
             var myChart3 = echarts.init(document.getElementById("methods-echart"));
             var chartOptions3 = <%-JSON.stringify(JSON.parse(JSON.stringify(option3))) %>;
             myChart3.setOption(chartOptions3);
             }
-            if(<%=options.datamodel%>){
+            if(<%=options.datamodel%> || <%=!usedOptions%>){
             var myChart4 = echarts.init(document.getElementById("schema-echart"));
             var chartOptions4 = <%-JSON.stringify(JSON.parse(JSON.stringify(option4))) %>;
             myChart4.setOption(chartOptions4);
             }
-            if(<%=options.breakingChanges%>){
+            if(<%=options.breakingChanges%>|| <%=!usedOptions%>){
             var myChart5 = echarts.init(document.getElementById("radar-echart"));
             var chartOptions5 = <%-JSON.stringify(JSON.parse(JSON.stringify(option5))) %>;
             myChart5.setOption(chartOptions5);
             }
-            if(<%=options.breakingMethods%>){
+            if(<%=options.breakingMethods%> || <%=!usedOptions%>){
             var myChart6 = echarts.init(document.getElementById("methods-breaking"));
-            var chartOptions6 = <%-JSON.stringify(JSON.parse(JSON.stringify(options6))) %>;
+            var chartOptions6 = <%-JSON.stringify(JSON.parse(JSON.stringify(option6))) %>;
             myChart6.setOption(chartOptions6);
             }
     </script>
@@ -68,8 +80,7 @@ var ejsTemp = `
 </html>
 `;
 
-export function renderMetrics(data, path, options, format) {
-  console.log(data);
+export function renderMetrics(data, path, options, format, usedOptions) {
   // save the html file
   fs.writeFileSync(join(path, ".previous_versions", "metrics.ejs"), ejsTemp);
   // ENDPOINTS METRICS
@@ -411,6 +422,32 @@ export function renderMetrics(data, path, options, format) {
   };
   //   }
 
+  var breackingChanges = JSON.parse(
+    fs.readFileSync(join(path, ".previous_versions", ".breaking.json"), "utf8")
+  );
+
+  var indicators =
+    //   [
+    //     ...new Set(
+    breackingChanges
+      .map((d) => d.breaking)
+      .filter((a) => a.length > 0).flat(1)
+     .map((d) => d.id);
+
+      console.log(indicators);
+  // ),
+  //   ];
+  var count = {};
+  indicators.forEach(function (i) {
+    count[i] = (count[i] || 0) + 1;
+  });
+
+  option5.radar.indicator = Object.keys(count).map((d) => {
+    return { name: d, max: Object.values(count).reduce((a, b) => a + b) };
+  });
+  option5.series[0].data[0].value = Object.values(count);
+  option5.series[0].data[0].name = "Breaking Changes";
+
   // creat bar chart for number of methods affected by breaking changes
   //   if (options.breakingMethods || !options) {
   var option6 = {
@@ -508,71 +545,64 @@ export function renderMetrics(data, path, options, format) {
     ],
   };
 
-  var indicators =
-    //   [
-    //     ...new Set(
-    data
-      .map((d) => d.diff_2)
-      .filter((a) => a)
-      .flat(1)
-      .map((d) => d.id);
-  // ),
-  //   ];
-  var count = {};
-  indicators.forEach(function (i) {
-    count[i] = (count[i] || 0) + 1;
-  });
-  console.log(count);
-  option5.radar.indicator = Object.keys(count).map((d) => {
-    return { name: d, max: Object.values(count).reduce((a, b) => a + b) };
-  });
-  option5.series[0].data[0].value = Object.values(count);
-  option5.series[0].data[0].name = "Breaking Changes";
-  myChart5.hideLoading();
-  myChart5.setOption(option5);
-
-  console.log(option5);
-
   // methods affected by breaking changes
-  var methods = data
-    .map((d) => d.diff_2)
+  var methods = breackingChanges
+    .map((d) => d.breaking)
     .filter((a) => a)
     .flat(1)
     .map((d) => d.operation.toLowerCase());
+
+
 
   var count = {};
   methods.forEach(function (i) {
     count[i] = (count[i] || 0) + 1;
   });
-  console.log(count);
-
-  console.log(option6);
-
   Object.keys(count).forEach((d) => {
     option6.series.find((e) => e.name == d).data.push(count[d]);
   });
   //   }
 
   // render charts options in ejs
-  var rendered = ejs.renderFile(
+  var template = fs.readFileSync(
     join(path, ".previous_versions", "metrics.ejs"),
-    {
-      options: options,
-      option: option,
-      option2: option2,
-      option3: option3,
-      option4: option4,
-      option5: option5,
-      option6: option6,
-    },
-    (err, data) => {
+    "utf8",
+    (err, template) => {
       if (err) {
-        console.log(err);
-      } else {
-        res.end(data);
+        console.error("Error reading template:", err);
+        return;
       }
     }
   );
 
-  fs.writeFileSync(join(path, ".previous_versions", "metrics.html"));
+  var rendered = ejs.render(template, {
+    options: options,
+    usedOptions: usedOptions,
+    option: option,
+    option2: option2,
+    option3: option3,
+    option4: option4,
+    option5: option5,
+    option6: option6,
+  });
+
+  /// write rendered html to file
+  if (!fs.existsSync(join(path, "apivol-outputs"))) {
+    fs.mkdirSync(join(path, "apivol-outputs"), {
+      recursive: true,
+    });
+  }
+
+  console.log(
+    "Writing metrics.html to",
+    join(path, "apivol-outputs", "metrics.html")
+  );
+
+  fs.writeFileSync(
+    join(path, "apivol-outputs", "metrics.html"),
+    rendered,
+    (err) => {
+      if (err) throw err;
+    }
+  );
 }

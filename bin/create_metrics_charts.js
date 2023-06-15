@@ -2,6 +2,16 @@ import fs from "fs";
 import { join } from "path";
 import ejs from "ejs";
 
+const http_methods = [
+  "get",
+  "put",
+  "post",
+  "delete",
+  "options",
+  "head",
+  "patch",
+  "trace",
+];
 var ejsTemp = `
 <!DOCTYPE html>
 <html>
@@ -25,20 +35,20 @@ var ejsTemp = `
   </head>
   <body>
   <div id="metrics-container">
-  <div id="metrcis-views-container">
+  <div id="metrcis-views-container" >
     <div id="structure-metrics">
       <div
         id="metrics-echart"
         class="metrics-views-item"
-        style="width: 33vw; height: 40vh"
+        style="width: 33vw; height: 45vh"
       ></div>
-      <div id="parameters-echart" style="width: 33vw; height: 40vh"></div>
-      <div id="methods-echart" style="width: 33vw; height: 40vh"></div>
+      <div id="parameters-echart" style="width: 33vw; height: 45vh"></div>
+      <div id="methods-echart" style="width: 33vw; height: 45vh"></div>
     </div>
     <div id="schema-metrics">
-      <div id="schema-echart" style="width: 33vw; height: 40vh"></div>
-      <div id="radar-echart" style="width: 46vw; height: 40vh"></div>
-      <div id="methods-breaking" style="width: 33vw; height: 40vh"></div>
+      <div id="schema-echart" style="width: 33vw; height: 45vh"></div>
+      <div id="radar-echart" style="width: 46vw; height: 45vh"></div>
+      <div id="methods-breaking" style="width: 38vw; height: 45vh"></div>
     </div>
   </div>
 </div>
@@ -48,39 +58,69 @@ var ejsTemp = `
             if(<%=options.endpoints%> || <%=!usedOptions%>){
             var myChart = echarts.init(document.getElementById("metrics-echart"));
             var chartOptions1 = <%-JSON.stringify(JSON.parse(JSON.stringify(option))) %>;
-            myChart.setOption(chartOptions1);   
+            myChart.setOption(chartOptions1); 
+            window.addEventListener('resize', function() {
+              myChart.resize();
+            });  
             }
+
+          
+
             if(<%=options.parameters%> || <%=!usedOptions%>){
             var myChart2 = echarts.init(document.getElementById("parameters-echart"));
             var chartOptions2 = <%-JSON.stringify(JSON.parse(JSON.stringify(option2))) %>;
             myChart2.setOption(chartOptions2);
+            window.addEventListener('resize', function() {
+                myChart2.resize();
+                });
             }
+
+            myChart2.setOption(chartOptions2);
+
             if(<%=options.methods%> || <%=!usedOptions%>){
             var myChart3 = echarts.init(document.getElementById("methods-echart"));
             var chartOptions3 = <%-JSON.stringify(JSON.parse(JSON.stringify(option3))) %>;
             myChart3.setOption(chartOptions3);
+            window.addEventListener('resize', function() {
+                myChart3.resize();
+                });
             }
             if(<%=options.datamodel%> || <%=!usedOptions%>){
             var myChart4 = echarts.init(document.getElementById("schema-echart"));
             var chartOptions4 = <%-JSON.stringify(JSON.parse(JSON.stringify(option4))) %>;
             myChart4.setOption(chartOptions4);
+            window.addEventListener('resize', function() {
+                myChart4.resize();
+                });
             }
             if(<%=options.breakingChanges%>|| <%=!usedOptions%>){
             var myChart5 = echarts.init(document.getElementById("radar-echart"));
             var chartOptions5 = <%-JSON.stringify(JSON.parse(JSON.stringify(option5))) %>;
             myChart5.setOption(chartOptions5);
+            window.addEventListener('resize', function() {
+                myChart5.resize();
+                });
             }
             if(<%=options.breakingMethods%> || <%=!usedOptions%>){
             var myChart6 = echarts.init(document.getElementById("methods-breaking"));
             var chartOptions6 = <%-JSON.stringify(JSON.parse(JSON.stringify(option6))) %>;
             myChart6.setOption(chartOptions6);
+            window.addEventListener('resize', function() {
+                myChart6.resize();
+                });
             }
+
+
     </script>
   </body>
 </html>
 `;
 
 export function renderMetrics(data, path, options, format, usedOptions) {
+    // sort by commit_date
+    data.sort((a, b) => {
+        return new Date(a.commit_date) - new Date(b.commit_date);
+        });
   // save the html file
   fs.writeFileSync(join(path, ".previous_versions", "metrics.ejs"), ejsTemp);
   // ENDPOINTS METRICS
@@ -130,7 +170,16 @@ export function renderMetrics(data, path, options, format, usedOptions) {
     ],
   };
 
-  option.xAxis.data = data.map((d) => d.commit_date);
+  option.xAxis.data = data.map((d) => //day/Mon/year (hh:mm:ss)
+    new Date(d.commit_date).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        second: "numeric",
+    })
+    );
   option.series[0].data = data.map((d) => d.structureSize.paths);
   option.series[1].data = data.map((d) => d.structureSize.operations);
   //   }
@@ -195,7 +244,16 @@ export function renderMetrics(data, path, options, format, usedOptions) {
       },
     ],
   };
-  option2.xAxis.data = data.map((d) => d.commit_date);
+  option2.xAxis.data = data.map((d) => //day/Mon/year (hh:mm:ss)
+    new Date(d.commit_date).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        second: "numeric",
+    })
+    );
   option2.series[0].data = data.map(
     (d) => d.structureSize.parametered_operations
   );
@@ -307,7 +365,16 @@ export function renderMetrics(data, path, options, format, usedOptions) {
     ],
   };
 
-  option3.xAxis.data = data.map((d) => d.commit_date);
+  option3.xAxis.data = data.map((d) => //day/Mon/year (hh:mm:ss)
+    new Date(d.commit_date).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        second: "numeric",
+    })
+    );
   option3.series[0].data = data.map((d) => d.structureSize.methods.get);
   option3.series[1].data = data.map((d) => d.structureSize.methods.post);
   option3.series[2].data = data.map((d) => d.structureSize.methods.put);
@@ -370,7 +437,16 @@ export function renderMetrics(data, path, options, format, usedOptions) {
     ],
   };
 
-  option4.xAxis.data = data.map((d) => d.commit_date);
+  option4.xAxis.data = data.map((d) => //day/Mon/year (hh:mm:ss)
+    new Date(d.commit_date).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        second: "numeric",
+    })
+    );
   option4.series[0].data = data.map((d) => d.schemaSize.schemas);
 
   option4.series[1].data = data.map((d) => d.schemaSize.properties);
@@ -431,10 +507,10 @@ export function renderMetrics(data, path, options, format, usedOptions) {
     //     ...new Set(
     breackingChanges
       .map((d) => d.breaking)
-      .filter((a) => a.length > 0).flat(1)
-     .map((d) => d.id);
+      .filter((a) => a.length > 0)
+      .flat(1)
+      .map((d) => d.id);
 
-      console.log(indicators);
   // ),
   //   ];
   var count = {};
@@ -450,6 +526,8 @@ export function renderMetrics(data, path, options, format, usedOptions) {
 
   // creat bar chart for number of methods affected by breaking changes
   //   if (options.breakingMethods || !options) {
+
+  var uniqueChanges = [...new Set(indicators)];
   var option6 = {
     title: {
       text: "Methods affected by breaking changes",
@@ -472,7 +550,7 @@ export function renderMetrics(data, path, options, format, usedOptions) {
         "head",
         "trace",
       ],
-      bottom: 0,
+      bottom: -5,
     },
     toolbox: {
       show: true,
@@ -488,10 +566,28 @@ export function renderMetrics(data, path, options, format, usedOptions) {
     },
     xAxis: {
       type: "category",
-      data: ["Methods"],
+      // show all labels
+
+      data: uniqueChanges.map((d) => {
+
+        return { value: d, textStyle: { fontSize: 8, show:true} };
+      }),
+      // rotate: 90,
+        axisLabel: {
+            interval: 0,
+            rotate: 90
+        }
+      
+
     },
     yAxis: {
       type: "value",
+      // height 70% of the chart
+          max: "dataMax",
+          min: 0,
+        //   axisLabel: {
+        //     formatter: "{value} %",
+        //   },
     },
     series: [
       {
@@ -545,21 +641,29 @@ export function renderMetrics(data, path, options, format, usedOptions) {
     ],
   };
 
-  // methods affected by breaking changes
-  var methods = breackingChanges
-    .map((d) => d.breaking)
-    .filter((a) => a)
-    .flat(1)
-    .map((d) => d.operation.toLowerCase());
-
 
 
   var count = {};
-  methods.forEach(function (i) {
-    count[i] = (count[i] || 0) + 1;
+  http_methods.forEach((d) => {
+    if (!count[d]) count[d] = [];
+    uniqueChanges.forEach(function (i, index) {
+      var c = breackingChanges.find((e) => e.breaking.find((f) => f.id == i));
+      count[d][index] = 0;
+
+      if (c) {
+        var counter = breackingChanges.filter((e) => {
+          var res = e.breaking.find(
+            (f) => f.id == i && f.operation.toLowerCase() == d
+          );
+          return res;
+        }).length;
+        count[d][index] = counter;
+      }
+    });
   });
+
   Object.keys(count).forEach((d) => {
-    option6.series.find((e) => e.name == d).data.push(count[d]);
+    option6.series.find((e) => e.name == d).data = count[d];
   });
   //   }
 

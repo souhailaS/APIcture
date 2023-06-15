@@ -106,8 +106,16 @@ program
     "-r, --repo <path>",
     "Path to the repository. Defaults to current working directory."
   )
+
   .option("-o, --output <path>", "Path to the output directory")
   .option("-f, --format <format>", "Output format")
+  .option("-e, --endpoints", "Show endpoints")
+  .option("-m, --methods", "Show methods")
+  .option("-p, --parameters", "Show parameters")
+  .option("-d, --datamodel", "Show datamodel")
+  .option("-bc, --breakingChanges", "Show breaking changes")
+  .option("-bm, --breakingMethods", "Show breaking methods")
+  
   .action(async (options) => {
     var vizOptions = {};
     vizOptions.endpoints = options.endpoints ? true : false;

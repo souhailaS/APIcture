@@ -276,7 +276,7 @@ export async function computeSizeMetrics(path) {
         var metrics = JSON.parse(metrics_file);
         metrics.push({
           hash: oasPaths[l].hash,
-          comit_date: oasPaths[l].comit_date,
+          comit_date: oasPaths[l].commit_date,
           structureSize: structureSize,
           schemaSize: schemaSize,
         });

@@ -28,7 +28,9 @@ export async function computeDiff(path) {
     // ascending order
     return new Date(a.commit_date) - new Date(b.commit_date);
   });
-  console.log(chalk.blue(`|- Found ${api_commits.length} commits changing OAS file`));
+  console.log(
+    chalk.blue(`|- Found ${api_commits.length} commits changing OAS file`)
+  );
   console.log(
     // chalk.blue(
     //   `|-- From ${api_commits[0].commit_date} to ${
@@ -38,24 +40,22 @@ export async function computeDiff(path) {
     // fomart the dats as xxth Month, Year
     chalk.blue(
       `|-- From [${new Date(api_commits[0].commit_date).getDate()}th ${new Date(
-        api_commits[0].commit_date).toLocaleString("default", {
-          month: "long",
-        })
-      }, ${new Date(api_commits[0].commit_date).getFullYear()}] to [${
-        new Date(api_commits[api_commits.length - 1].commit_date).getDate()
-      }th ${
-        new Date(api_commits[api_commits.length - 1].commit_date).toLocaleString(
-          "default",
-          {
-            month: "long",
-          }
-        )
-      }, ${new Date(api_commits[api_commits.length - 1].commit_date).getFullYear()}]`
+        api_commits[0].commit_date
+      ).toLocaleString("default", {
+        month: "long",
+      })}, ${new Date(
+        api_commits[0].commit_date
+      ).getFullYear()}] to [${new Date(
+        api_commits[api_commits.length - 1].commit_date
+      ).getDate()}th ${new Date(
+        api_commits[api_commits.length - 1].commit_date
+      ).toLocaleString("default", {
+        month: "long",
+      })}, ${new Date(
+        api_commits[api_commits.length - 1].commit_date
+      ).getFullYear()}]`
     )
-
   );
-
-
 
   // show progress bar
   // add text near the bar
@@ -65,13 +65,16 @@ export async function computeDiff(path) {
         "|- Computing diffs - " +
         colors.cyan("{bar}") +
         "| {percentage}% || {value}/{total} Chunks || Speed: {speed}",
+      barCompleteChar: "\u2588",
+      barIncompleteChar: "\u2591",
+      hideCursor: true,
     },
+
     cliProgress.Presets.rect
   );
 
   bar.start(api_commits.length - 1, 0, {
     speed: "N/A",
-
   });
 
   var next_pair = async (i) => {
@@ -146,7 +149,7 @@ export async function computeDiff(path) {
         // if (error.reason != "duplicated mapping key") console.log(error);
       }
 
-      if (i < api_commits.length) {
+      if (i < api_commits.length-1) {
         i++;
         return await next_pair(i);
       } else {
@@ -156,12 +159,14 @@ export async function computeDiff(path) {
       }
     } else {
       console.log(chalk.blue("|- Done"));
-      bar.stop();
+
       return;
     }
   };
 
-  return await next_pair(1);
+   await next_pair(1);
+  //  bar.stop();
+   return 
 }
 
 async function extractNonBreakingChanges(diff) {

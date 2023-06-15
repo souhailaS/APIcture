@@ -4,3 +4,6 @@
 
 ## [0.0.6]
 - The `apict metrics` is supported with the `-format` (html,svg,png) option.
+
+## [0.0.7]
+- The `apict metrics`  bug fix of when no format is specified. 

@@ -677,7 +677,7 @@ export function renderMetrics(data, path, options, format, usedOptions) {
   });
   //   }
 
-  if (format == "html" || !format) {
+  if (format?.toLowerCase() == "html" || !format) {
     // render charts options in ejs
     var template = fs.readFileSync(
       join(path, ".previous_versions", "metrics.ejs"),
@@ -730,7 +730,7 @@ export function renderMetrics(data, path, options, format, usedOptions) {
     breakingChanges: option5,
     breakingMethods: option6,
   };
-
+if(format){
   if (format.toLowerCase() == "svg") {
     Object.keys(allOptions).forEach((d) => {
       if (options[d] || !usedOptions) {
@@ -803,4 +803,5 @@ export function renderMetrics(data, path, options, format, usedOptions) {
           });
           process.exit(0);
     }
+}
 }

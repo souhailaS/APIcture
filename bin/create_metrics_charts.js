@@ -3,6 +3,7 @@ import { join } from "path";
 import ejs from "ejs";
 import echarts from "echarts";
 import chalk from "chalk";
+import { createCanvas, loadImage } from "canvas";
 
 const http_methods = [
   "get",
@@ -767,4 +768,39 @@ export function renderMetrics(data, path, options, format, usedOptions) {
     });
     process.exit(0);
   }
+
+    if (format.toLowerCase() == "png") {
+
+        Object.keys(allOptions).forEach((d) => {
+            if (options[d] || !usedOptions) {
+                const canvas = createCanvas(800, 800);
+                // ECharts can use the Canvas instance created by node-canvas as a container directly
+                const chart = echarts.init(canvas);
+                chart.setOption(allOptions[d]);
+                // render then  as png with good quality with high pixel density and white background
+                const buffer = canvas.toBuffer("image/png", {
+                  compressionLevel: 9,
+                  filters: canvas.PNG_FILTER_NONE,
+                  resolution: 900,
+                  background: "#ffffff",
+                });
+            
+                if (!fs.existsSync(join(path,  "apivol-outputs"))) {
+                  fs.mkdirSync(join(path,"apivol-outputs"), { recursive: true });
+                }
+                fs.writeFileSync(
+                  join(path, "apivol-outputs", "metric-" + d + ".png"),
+                  buffer
+                );
+            
+                console.log(
+                  chalk.greenBright.underline.bold(
+                    "|- Output Visualization saved as: " +
+                      join(path, "apivol-outputs", "metric-" + d + ".png")
+                  )
+                );
+            }
+          });
+          process.exit(0);
+    }
 }

@@ -300,7 +300,7 @@ export async function computeSizeMetrics(path) {
   };
 
    await next(0);
-   return fs.readFileSync(join(path, ".metrics.json"), "utf8");
+   return JSON.parse(fs.readFileSync(join(path, ".metrics.json"), "utf8"));
 
 }
 

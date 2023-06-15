@@ -1,6 +1,8 @@
 import fs from "fs";
 import { join } from "path";
 import ejs from "ejs";
+import echarts from "echarts";
+import chalk from "chalk";
 
 const http_methods = [
   "get",
@@ -117,10 +119,10 @@ var ejsTemp = `
 `;
 
 export function renderMetrics(data, path, options, format, usedOptions) {
-    // sort by commit_date
-    data.sort((a, b) => {
-        return new Date(a.commit_date) - new Date(b.commit_date);
-        });
+  // sort by commit_date
+  data.sort((a, b) => {
+    return new Date(a.commit_date) - new Date(b.commit_date);
+  });
   // save the html file
   fs.writeFileSync(join(path, ".previous_versions", "metrics.ejs"), ejsTemp);
   // ENDPOINTS METRICS
@@ -170,16 +172,19 @@ export function renderMetrics(data, path, options, format, usedOptions) {
     ],
   };
 
-  option.xAxis.data = data.map((d) => //day/Mon/year (hh:mm:ss)
-    new Date(d.commit_date).toLocaleDateString("en-GB", {
+  option.xAxis.data = data.map(
+    (
+      d //day/Mon/year (hh:mm:ss)
+    ) =>
+      new Date(d.commit_date).toLocaleDateString("en-GB", {
         day: "numeric",
         month: "short",
         year: "numeric",
         hour: "numeric",
         minute: "numeric",
         second: "numeric",
-    })
-    );
+      })
+  );
   option.series[0].data = data.map((d) => d.structureSize.paths);
   option.series[1].data = data.map((d) => d.structureSize.operations);
   //   }
@@ -244,16 +249,19 @@ export function renderMetrics(data, path, options, format, usedOptions) {
       },
     ],
   };
-  option2.xAxis.data = data.map((d) => //day/Mon/year (hh:mm:ss)
-    new Date(d.commit_date).toLocaleDateString("en-GB", {
+  option2.xAxis.data = data.map(
+    (
+      d //day/Mon/year (hh:mm:ss)
+    ) =>
+      new Date(d.commit_date).toLocaleDateString("en-GB", {
         day: "numeric",
         month: "short",
         year: "numeric",
         hour: "numeric",
         minute: "numeric",
         second: "numeric",
-    })
-    );
+      })
+  );
   option2.series[0].data = data.map(
     (d) => d.structureSize.parametered_operations
   );
@@ -365,16 +373,19 @@ export function renderMetrics(data, path, options, format, usedOptions) {
     ],
   };
 
-  option3.xAxis.data = data.map((d) => //day/Mon/year (hh:mm:ss)
-    new Date(d.commit_date).toLocaleDateString("en-GB", {
+  option3.xAxis.data = data.map(
+    (
+      d //day/Mon/year (hh:mm:ss)
+    ) =>
+      new Date(d.commit_date).toLocaleDateString("en-GB", {
         day: "numeric",
         month: "short",
         year: "numeric",
         hour: "numeric",
         minute: "numeric",
         second: "numeric",
-    })
-    );
+      })
+  );
   option3.series[0].data = data.map((d) => d.structureSize.methods.get);
   option3.series[1].data = data.map((d) => d.structureSize.methods.post);
   option3.series[2].data = data.map((d) => d.structureSize.methods.put);
@@ -437,16 +448,19 @@ export function renderMetrics(data, path, options, format, usedOptions) {
     ],
   };
 
-  option4.xAxis.data = data.map((d) => //day/Mon/year (hh:mm:ss)
-    new Date(d.commit_date).toLocaleDateString("en-GB", {
+  option4.xAxis.data = data.map(
+    (
+      d //day/Mon/year (hh:mm:ss)
+    ) =>
+      new Date(d.commit_date).toLocaleDateString("en-GB", {
         day: "numeric",
         month: "short",
         year: "numeric",
         hour: "numeric",
         minute: "numeric",
         second: "numeric",
-    })
-    );
+      })
+  );
   option4.series[0].data = data.map((d) => d.schemaSize.schemas);
 
   option4.series[1].data = data.map((d) => d.schemaSize.properties);
@@ -569,25 +583,22 @@ export function renderMetrics(data, path, options, format, usedOptions) {
       // show all labels
 
       data: uniqueChanges.map((d) => {
-
-        return { value: d, textStyle: { fontSize: 8, show:true} };
+        return { value: d, textStyle: { fontSize: 8, show: true } };
       }),
       // rotate: 90,
-        axisLabel: {
-            interval: 0,
-            rotate: 90
-        }
-      
-
+      axisLabel: {
+        interval: 0,
+        rotate: 90,
+      },
     },
     yAxis: {
       type: "value",
       // height 70% of the chart
-          max: "dataMax",
-          min: 0,
-        //   axisLabel: {
-        //     formatter: "{value} %",
-        //   },
+      max: "dataMax",
+      min: 0,
+      //   axisLabel: {
+      //     formatter: "{value} %",
+      //   },
     },
     series: [
       {
@@ -641,8 +652,6 @@ export function renderMetrics(data, path, options, format, usedOptions) {
     ],
   };
 
-
-
   var count = {};
   http_methods.forEach((d) => {
     if (!count[d]) count[d] = [];
@@ -667,46 +676,95 @@ export function renderMetrics(data, path, options, format, usedOptions) {
   });
   //   }
 
-  // render charts options in ejs
-  var template = fs.readFileSync(
-    join(path, ".previous_versions", "metrics.ejs"),
-    "utf8",
-    (err, template) => {
-      if (err) {
-        console.error("Error reading template:", err);
-        return;
+  if (format == "html" || !format) {
+    // render charts options in ejs
+    var template = fs.readFileSync(
+      join(path, ".previous_versions", "metrics.ejs"),
+      "utf8",
+      (err, template) => {
+        if (err) {
+          console.error("Error reading template:", err);
+          return;
+        }
       }
-    }
-  );
+    );
 
-  var rendered = ejs.render(template, {
-    options: options,
-    usedOptions: usedOptions,
-    option: option,
-    option2: option2,
-    option3: option3,
-    option4: option4,
-    option5: option5,
-    option6: option6,
-  });
-
-  /// write rendered html to file
-  if (!fs.existsSync(join(path, "apivol-outputs"))) {
-    fs.mkdirSync(join(path, "apivol-outputs"), {
-      recursive: true,
+    var rendered = ejs.render(template, {
+      options: options,
+      usedOptions: usedOptions,
+      option: option,
+      option2: option2,
+      option3: option3,
+      option4: option4,
+      option5: option5,
+      option6: option6,
     });
+
+    /// write rendered html to file
+    if (!fs.existsSync(join(path, "apivol-outputs"))) {
+      fs.mkdirSync(join(path, "apivol-outputs"), {
+        recursive: true,
+      });
+    }
+
+    console.log(
+      "Writing metrics.html to",
+      join(path, "apivol-outputs", "metrics.html")
+    );
+
+    fs.writeFileSync(
+      join(path, "apivol-outputs", "metrics.html"),
+      rendered,
+      (err) => {
+        if (err) throw err;
+      }
+    );
   }
 
-  console.log(
-    "Writing metrics.html to",
-    join(path, "apivol-outputs", "metrics.html")
-  );
+  var allOptions = {
+    endpoints: option,
+    parameters: option2,
+    methods: option3,
+    datamodel: option4,
+    breakingChanges: option5,
+    breakingMethods: option6,
+  };
 
-  fs.writeFileSync(
-    join(path, "apivol-outputs", "metrics.html"),
-    rendered,
-    (err) => {
-      if (err) throw err;
-    }
-  );
+  if (format.toLowerCase() == "svg") {
+    Object.keys(allOptions).forEach((d) => {
+      if (options[d] || !usedOptions) {
+        const chart = echarts.init(null, null, {
+          renderer: "svg", // must use SVG rendering mode
+          ssr: true, // enable SSR
+          width: 500, // need to specify height and width
+          height: 500,
+        });
+
+        chart.setOption(allOptions[d]);
+        const svgStr = chart.renderToSVGString();
+        fs.writeFileSync(
+          join(path, "apivol-outputs", `metric-${d}.svg`),
+          svgStr,
+          "utf8",
+          (err) => {
+            if (err) {
+              console.error("Error saving output:", err);
+            } else {
+              console.log("Output saved as", { outputPath });
+            }
+          }
+        );
+        console.log(
+          chalk.greenBright.underline.bold(
+            "|- Output Visualization saved as: " +
+              join(path, "apivol-outputs", `metric-${d}.svg`)
+          )
+        );
+        // exit process
+
+        // open(join(path, "..", "apivol-outputs", "sunburst.svg"));
+      }
+    });
+    process.exit(0);
+  }
 }

@@ -108,13 +108,19 @@ program
   .option("-o, --output <path>", "Path to the output directory")
   .option("-f, --format <format>", "Output format")
   .action(async (options) => {
+    var vizOptions = {};
+    vizOptions.endpoints = options.endpoints ? true : false;
+    vizOptions.methods = options.methods ? true : false;
+    vizOptions.parameters = options.parameters ? true : false;
+    vizOptions.datamodel = options.datamodel ? true : false;
+    vizOptions.breackingChanges = options.breaackingChanges ? true : false;
+    vizOptions.breakingMethods = options.breakingMethods ? true : false;
     const repoPath = options.repo || process.cwd();
     try {
       await fetchHistory(repoPath);
       await computeDiff(repoPath);
       var metrics = await computeSizeMetrics(repoPath);
-
-      // await renderMetrics(repoPath, options.format);
+      await renderMetrics(metrics, repoPath, vizOptions, options.format);
     } catch (err) {
       console.log(err);
     }

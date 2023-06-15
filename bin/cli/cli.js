@@ -23,6 +23,7 @@ import { computeDiff } from "../oasdiff.js";
 import { generateChangesViz } from "../create_sunburst.js";
 import { renderTree } from "../create_changes_tree.js";
 import { computeSizeMetrics } from "../metrics.js";
+import { renderMetrics } from "../create_metrics_charts.js";
 
 import chalk from "chalk";
 
@@ -120,7 +121,7 @@ program
       await fetchHistory(repoPath);
       await computeDiff(repoPath);
       var metrics = await computeSizeMetrics(repoPath);
-      await renderMetrics(metrics, repoPath, vizOptions, options.format);
+      renderMetrics(metrics, repoPath, vizOptions, options.format);
     } catch (err) {
       console.log(err);
     }

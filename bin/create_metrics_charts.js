@@ -2,7 +2,7 @@ import fs from "fs";
 import { join } from "path";
 import ejs from "ejs";
 
-var ejs = `
+var ejsTemp = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -69,8 +69,9 @@ var ejs = `
 `;
 
 export function renderMetrics(data, path, options, format) {
+  console.log(data);
   // save the html file
-  fs.writeFileSync(join(path, ".previous_versions", "metrics.ejs"), ejs);
+  fs.writeFileSync(join(path, ".previous_versions", "metrics.ejs"), ejsTemp);
   // ENDPOINTS METRICS
   //   if (options.endpoints || !options) {
   var option = {
@@ -573,10 +574,5 @@ export function renderMetrics(data, path, options, format) {
     }
   );
 
-
-  fs.writeFileSync(
-    join(path, ".previous_versions", "metrics.html"),
-  )
-
-
+  fs.writeFileSync(join(path, ".previous_versions", "metrics.html"));
 }

@@ -24,6 +24,7 @@ import { generateChangesViz } from "../create_sunburst.js";
 import { renderTree } from "../create_changes_tree.js";
 import { computeSizeMetrics } from "../metrics.js";
 import { renderMetrics } from "../create_metrics_charts.js";
+import { computeOverallGrowthMetrics } from "../overall_metrics.js";
 
 import chalk from "chalk";
 
@@ -119,8 +120,6 @@ program
     }
   });
 
-
-
 program
   .command("report")
   .description(
@@ -134,7 +133,9 @@ program
   .option("-f, --format <format>", "Output format")
   .action(async (options) => {
     message();
-   console.log("report");
+    const repoPath = options.repo || process.cwd();
+    const overrAll = await computeOverallGrowthMetrics(repoPath);
+   
   });
 
 function message() {
@@ -162,11 +163,6 @@ function message() {
     )
   );
   console.log();
-
-
-
 }
-
-
 
 program.parse(process.argv);

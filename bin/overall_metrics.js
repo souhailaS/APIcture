@@ -1,8 +1,10 @@
 import { join } from "path";
 import SwaggerParser from "@apidevtools/swagger-parser";
 import fs from "fs";
+import { version_formats, versions_formats_classes } from "./versions_parser/regex.js";
+import { detectChanges } from "./versions_parser/upgrades_detector.js";
 
-function computeOverallGrowthMetrics(path) {
+export async function computeOverallGrowthMetrics(path) {
   var diffs = [];
   var versions = [];
   path = join(path, ".previous_versions");
@@ -20,10 +22,38 @@ function computeOverallGrowthMetrics(path) {
     );
 
     if (thisCommit) {
+
+      var v = thisCommit.info.version;
+      var version_format = "Other";
+      version_format = Object.keys(version_formats.filter((vf) => {
+        if (Object.values(vf)[0].test(v)) {
+          return true;
+        }
+      })[version_formats.filter((vf) => {
+        if (Object.values(vf)[0].test(v)) {
+          return true;
+        }
+      }).length - 1])[0]
+
+      var version_format_class = Object.keys( versions_formats_classes.filter((vf) => {
+        if (Object.values(vf)[0].test(version_format)) {
+          return true;
+        }
+      })[versions_formats_classes.filter((vf) => {
+        if (Object.values(vf)[0].test(version_format)) {
+          return true;
+        }
+      }).length - 1])[0]
+
+
+
       versions.push({
         hash: oasPaths[i].hash,
         commit_date: oasPaths[i].commit_date,
-        version: thisCommit.info.version,
+        version: v,
+        version_format: version_format,
+        version_format_class: version_format_class,
+
       });
 
       var thisCommit = thisCommit.paths
@@ -83,8 +113,8 @@ function computeOverallGrowthMetrics(path) {
       if (stableCommits == diffs.length) {
         stable = true;
       }
-
-      var overalllMetrics = {
+      var versions_changes =  detectChanges(versions);
+      return {
         gms: gms,
         smg: smg,
         growth: growth,
@@ -93,10 +123,14 @@ function computeOverallGrowthMetrics(path) {
         shrinkCommits: shrinkCommits,
         growthCommits: growthCommits,
         stableCommits: stableCommits,
+        versions_changes: versions_changes
       };
-      console.log(overalllMetrics);
+
+
     }
   };
 
-  next(0);
+  return await next(0);
 }
+
+

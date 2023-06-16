@@ -39,28 +39,7 @@ program
   .option("-o, --output <path>", "Path to the output directory")
   .option("-f, --format <format>", "Output format")
   .action(async (options) => {
-    console.log();
-    console.log(
-      chalk.bold.yellow(
-        "  _______  _______  _______  _______  _______  _______  "
-      )
-    );
-    console.log();
-    console.log(
-      " " +
-        chalk.bold.yellow("A") +
-        chalk.bold.blue("P") +
-        chalk.bold.green("I") +
-        chalk.bold.magenta("C") +
-        chalk.bold.red("T") +
-        " :  A CLI tool to visually depict API evolution"
-    );
-    console.log(
-      chalk.bold.yellow(
-        "  _______  _______  _______  _______  _______  _______  "
-      )
-    );
-    console.log();
+    message();
     const repoPath = options.repo || process.cwd();
     const outputDir = options.output || process.cwd();
     const format = options.format || "html";
@@ -89,6 +68,7 @@ program
   .option("-f, --format <format>", "Output format")
   .option("-freq, --frequency <frequency>", "Minimum frequency of changes")
   .action(async (options) => {
+    message();
     const repoPath = options.repo || process.cwd();
     try {
       await fetchHistory(repoPath);
@@ -115,8 +95,9 @@ program
   .option("-d, --datamodel", "Show datamodel")
   .option("-bc, --breakingChanges", "Show breaking changes")
   .option("-bm, --breakingMethods", "Show breaking methods")
-  
+
   .action(async (options) => {
+    message();
     var vizOptions = {};
     vizOptions.endpoints = options.endpoints ? true : false;
     vizOptions.methods = options.methods ? true : false;
@@ -129,13 +110,63 @@ program
       await fetchHistory(repoPath);
       await computeDiff(repoPath);
       var metrics = await computeSizeMetrics(repoPath);
-      var usedOptions = Object.keys(vizOptions).filter(
-        (key) => vizOptions[key] === true
-      ).length>0;
+      var usedOptions =
+        Object.keys(vizOptions).filter((key) => vizOptions[key] === true)
+          .length > 0;
       renderMetrics(metrics, repoPath, vizOptions, options.format, usedOptions);
     } catch (err) {
       console.log(err);
     }
   });
+
+
+
+program
+  .command("report")
+  .description(
+    "Generate human redable or machine readable API Evolution report "
+  )
+  .option(
+    "-r, --repo <path>",
+    "Path to the repository. Defaults to current working directory."
+  )
+  .option("-o, --output <path>", "Path to the output directory")
+  .option("-f, --format <format>", "Output format")
+  .action(async (options) => {
+    message();
+   console.log("report");
+  });
+
+function message() {
+  console.log();
+  console.log(
+    chalk.bold.yellow(
+      "  _______  _______  _______  _______  _______  _______  "
+    )
+  );
+  console.log();
+  console.log(
+    " " +
+      chalk.bold.yellow("A") +
+      chalk.bold.blue("P") +
+      chalk.bold.green("I") +
+      chalk.bold.magenta("c") +
+      chalk.bold.red("t") +
+      chalk.bold.cyan("u") +
+      chalk.bold.yellow("r") +
+      " :  A CLI tool to visually depict API evolution"
+  );
+  console.log(
+    chalk.bold.yellow(
+      "  _______  _______  _______  _______  _______  _______  "
+    )
+  );
+  console.log();
+
+
+
+}
+
+
 
 program.parse(process.argv);

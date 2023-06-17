@@ -16,6 +16,17 @@ To use the apict tool, follow these steps:
 
 3. Specify any additional options or flags to customize the visualization output, such as the desired format (e.g., PDF, SVG, interactive HTML).
 
+### Changes Options
+- Details
+The changes subcommand offers a `--details (-d)` option, which introduces an additional level of granularity to the generated visualization. By default, the visualization provides an aggregate representation of changes at the path level, offering a comprehensive understanding of the overall change patterns across all paths. However, by utilizing the `--details` option, users can access a more fine-grained view of changes occurring at each individual path. This feature proves especially valuable when dealing with APIs characterized by an extensive history. Analyzing changes at the path level facilitates the identification of shared evolution patterns among different paths, enabling a more nuanced exploration of the API's evolution.
+
+- Frequency 
+The `changes` subcommand offers an additional option, `--frequency(freq)`, which allows the user to specify the minimum frequency of changes to be visualized. As not all changes have the same occurrence rate throughout the API's history, this option enables the generation of a focused visualization that includes only changes that have occurred a specified minimum number of times. For example:
+```
+apict changes --frequency 100
+```
+This command will generate a changes visualization that includes only those changes that have happened at least 100 times during the API's history.
+
 #### Metrics Options
 
 When using the `apict metrics` subcommand, you have the option to select specific API size metrics that you want to visualize the evolution of over time. 

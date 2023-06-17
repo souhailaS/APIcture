@@ -150,7 +150,7 @@ function convert(o, f) {
   //replace the action with the color
   if (o.name == "modified" || o.name == "mediaTypeModified") {
     o.itemStyle = {
-      color:'#4949CD'// pick_color(modified_colors, o["value"]), //'#4949CD'
+      color: "#4949CD", // pick_color(modified_colors, o["value"]), //'#4949CD'
     };
     o.name = "modified";
     o.label = {
@@ -158,7 +158,7 @@ function convert(o, f) {
     };
   } else if (o.name == "added" || o.name == "mediaTypeAdded") {
     o.itemStyle = {
-      color: '#49CD49'//pick_color(added_colors, o["value"]), //
+      color: "#49CD49", //pick_color(added_colors, o["value"]), //
     };
     o.name = "added";
     o.label = {
@@ -166,7 +166,7 @@ function convert(o, f) {
     };
   } else if (o.name == "deleted" || o.name == "mediaTypeDeleted") {
     o.itemStyle = {
-      color:'#CD4949'// pick_color(deleted_colors, o["value"]), //
+      color: "#CD4949", // pick_color(deleted_colors, o["value"]), //
     };
     o.name = "deleted";
     o.label = {
@@ -184,6 +184,7 @@ function convert(o, f) {
 export function createTree(data, f) {
   // MAP_MAX = getMaxValue(d);
   // console.log(MAP_MAX);
+
   if (f) data = filterByFrequency(data, f);
   // console.log(data.children);
 
@@ -203,10 +204,9 @@ export function createTree(data, f) {
 
   let option = {
     // make chart responsive
-     
 
     grid: {
-     width: '110%',
+      width: "110%",
     },
     tooltip: {
       trigger: "item",
@@ -406,6 +406,3 @@ export async function renderTree(path, f, format) {
     // open(join(path, "..", "apivol-outputs", "changes-visualization.svg"));
   }
 }
-
-
-

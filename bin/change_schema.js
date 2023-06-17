@@ -1,4 +1,13 @@
+
+
 export function computeFieldFrequency(jsonArray) {
+
+  var breaking = fs.readFileSync(join(path, ".breaking.json"));
+  breaking = JSON.parse(breaking);
+
+  console.log(breaking);
+
+
   jsonArray = jsonArray
     .map((diff) => {
       return diff.diff;

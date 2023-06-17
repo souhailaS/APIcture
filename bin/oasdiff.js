@@ -1,4 +1,11 @@
 #!/usr/bin/env node
+
+/**
+ * 
+ * This script computes the diffs between the OAS files in the repository.
+ * It also extracts the breaking and non breaking changes.
+ * 
+ */
 import util from "util";
 import child_process from "child_process";
 const exec = util.promisify(child_process.exec);

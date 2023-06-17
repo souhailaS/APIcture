@@ -1,41 +1,76 @@
-
-
-export function computeFieldFrequency(jsonArray) {
-
-  var breaking = fs.readFileSync(join(path, ".breaking.json"));
-  breaking = JSON.parse(breaking);
-
-  console.log(breaking);
-
-
+export function computeFieldFrequency(jsonArray, path, aggregate) {
   jsonArray = jsonArray
     .map((diff) => {
       return diff.diff;
     })
     .filter((diff) => diff);
 
-  jsonArray.forEach((diff) => {
-    mergeModification(diff.paths);
+  if (aggregate) {
+    jsonArray.forEach((diff) => {
+      mergeModification(diff.paths);
+    });
+  }
+
+  jsonArray = jsonArray.map((diff) => {
+    return { paths: diff.paths, info: diff.info, endpoints: diff.endpoints };
   });
 
   const frequencyMap = {};
 
   function processObject(obj, parentKey = "") {
-    for (const key in obj) {
-      if (key !== "from" && key !== "to" && key !== "tags") {
-        const field = parentKey ? `${parentKey}.${key}` : key;
+    if (Array.isArray(obj) && typeof obj[0] === "string") {
+      if (!aggregate) {
+        obj.forEach((element) => {
+          const field = parentKey ? `${parentKey}.${element}` : element;
+          if (!frequencyMap[field]) {
+            frequencyMap[field] = {
+              name: element,
+              value: 0,
+              children: [],
+            };
+          }
+          frequencyMap[field].value++;
+        });
+        
+      }
+    } else if (Array.isArray(obj) && typeof obj[0] === "object" && !aggregate) {
+      if (
+        Object.keys(obj[0]).includes("method") &&
+        Object.keys(obj[0]).includes("path")
+      )
 
+      for (let i = 0; i < obj.length; i++) {
+
+        const field = `paths.${parentKey.split(".").slice(-1)[0]}.${
+          obj[i].path
+        }.${obj[i].method}`;
         if (!frequencyMap[field]) {
           frequencyMap[field] = {
-            name: key,
+            name: obj[i].method,
             value: 0,
             children: [],
           };
-        }
-        frequencyMap[field].value++;
 
-        if (typeof obj[key] === "object" && obj[key] !== null) {
-          processObject(obj[key], field);
+          frequencyMap[field].value++;
+        }
+      }
+    } else {
+      for (const key in obj) {
+        if (key !== "from" && key !== "to" && key !== "tags") {
+          const field = parentKey ? `${parentKey}.${key}` : key;
+
+          if (!frequencyMap[field]) {
+            frequencyMap[field] = {
+              name: key,
+              value: 0,
+              children: [],
+            };
+          }
+          frequencyMap[field].value++;
+
+          if (typeof obj[key] === "object" && obj[key] !== null) {
+            processObject(obj[key], field);
+          }
         }
       }
     }
@@ -64,8 +99,9 @@ export function computeFieldFrequency(jsonArray) {
           value: 0,
           children: [],
         };
-        if(current.name !== "added" && current.name !== "deleted") {
-        current.children.push(child);}
+
+        // if (current.name !== "added" && current.name !== "deleted") {
+        current.children.push(child);
       }
       current = child;
       if (i < parts.length - 1) {
@@ -78,13 +114,11 @@ export function computeFieldFrequency(jsonArray) {
   return root;
 }
 
-function mergeModification(element) {
+function mergeModification(element, breaking) {
   if (element) {
     if (element.modified) {
-      // console.log("modifications");
       var modifcations = Object.values(element.modified);
-      // console.log(modifcations);
-      // merge all modifications
+
       var mergedModifications = {};
 
       modifcations.forEach((modification) => {
@@ -110,7 +144,7 @@ function mergeModification(element) {
       element.modified = mergedModifications;
     } else if (element.added) {
       var added = Object.values(element.added);
-  
+
       var mergedAdded = {};
 
       added.forEach((add) => {
@@ -135,7 +169,6 @@ function mergeModification(element) {
 
       // deleted
     } else if (element.deleted) {
-  
       var deleted = Object.values(element.deleted);
       // console.log(deleted);
       // merge all modifications

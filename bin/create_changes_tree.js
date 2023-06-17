@@ -8,7 +8,7 @@ import ejs from "ejs";
 import open from "open";
 
 let MAP_MAX = 30000;
-let MAP_STEPS = 200;
+let MAP_STEPS = 50;
 
 let modified_colors = colormap({
   colormap: [
@@ -64,7 +64,8 @@ export function filterByFrequency(data, f) {
   return newData;
 }
 
-function pick_color(map, value) {
+function pick_color(map, value, data) {
+  MAP_MAX = getMaxValue(data);
   let index = Math.round(MAP_STEPS * (value / MAP_MAX));
   if (index >= map.length) {
     index = map.length - 1;
@@ -88,15 +89,9 @@ export function getMaxValue(data) {
   return max;
 }
 
-function convert(o, f) {
+function convert(o, f, data) {
   // formattr for the name that have more than 10 characters
-  if (o.name.length > 10) {
-    o.label = {
-      formatter: function (params) {
-        return params.name.slice(0, 10) + "...";
-      },
-    };
-  }
+
   if (o.name == "servers") {
     if (o.children) {
       o.children.map((c) => {
@@ -115,7 +110,7 @@ function convert(o, f) {
     if (o.children.length == 0 || o["value"] < f) {
       delete o.children;
     } else {
-      o.children.map((c) => convert(c, f));
+      o.children.map((c) => convert(c, f, data));
     }
   }
 
@@ -143,22 +138,57 @@ function convert(o, f) {
     o.name = "params";
   }
 
+  o.label = {};
+
   o.label = {
-    minAngle: 10,
+    minAngle: 11,
   };
+
+  if (o.name.length > 6) {
+    o.label = {
+      minAngle: 12,
+      fontSize: 10,
+    };
+  }
+
+  if (o.name.length > 9) {
+    o.label = {
+      minAngle: 12,
+      fontSize: 9,
+    };
+  }
+
+  if (o.name.length > 15) {
+    o.label = {
+      minAngle: 12,
+      // fontSize: 9,
+      show: false,
+    };
+  }
 
   //replace the action with the color
   if (o.name == "modified" || o.name == "mediaTypeModified") {
     o.itemStyle = {
-      color: "#4949CD", // pick_color(modified_colors, o["value"]), //'#4949CD'
+      color: "#4949CD", //
+      // color: pick_color(modified_colors, o["value"]), //'#4949CD'
+      //  lower opacity for the modified
+      opacity: 0.5,
+      // border style
+      borderColor: "#fff",
+      borderWidth: 4,
     };
+
     o.name = "modified";
     o.label = {
       show: false,
     };
   } else if (o.name == "added" || o.name == "mediaTypeAdded") {
     o.itemStyle = {
-      color: "#49CD49", //pick_color(added_colors, o["value"]), //
+      // color: "#49CD49", //
+      color: pick_color(added_colors, o["value"]), //
+      opacity: 0.5,
+      borderColor: "#fff",
+      borderWidth: 4,
     };
     o.name = "added";
     o.label = {
@@ -166,7 +196,11 @@ function convert(o, f) {
     };
   } else if (o.name == "deleted" || o.name == "mediaTypeDeleted") {
     o.itemStyle = {
-      color: "#CD4949", // pick_color(deleted_colors, o["value"]), //
+      // color: "#CD4949",
+      color: pick_color(deleted_colors, o["value"]), //
+      opacity: 0.5,
+      borderColor: "#fff",
+      borderWidth: 4,
     };
     o.name = "deleted";
     o.label = {
@@ -174,17 +208,24 @@ function convert(o, f) {
     };
   } else {
     o.itemStyle = {
-      color: pick_color(grays, o["value"]),
+      color: pick_color(grays, o["value"], data),
     };
+    if (
+      ["get", "post", "put", "delete", "patch", "head", "options"].includes(
+        o.name.toLowerCase()
+      )
+    ) {
+      o.itemStyle = {
+        color: color(o.name.toLowerCase()),
+      };
+    }
   }
 
   return o;
 }
 
 export function createTree(data, f) {
-  // MAP_MAX = getMaxValue(d);
-  // console.log(MAP_MAX);
-
+  MAP_MAX = getMaxValue(data);
   if (f) data = filterByFrequency(data, f);
   // console.log(data.children);
 
@@ -200,7 +241,7 @@ export function createTree(data, f) {
 
   // console.log(data);
 
-  data = data.map((e) => convert(e, f));
+  data = data.map((e) => convert(e, f, data));
 
   let option = {
     // make chart responsive
@@ -219,6 +260,8 @@ export function createTree(data, f) {
 
     calculable: false,
     series: {
+      // root color
+      color: "#fff",
       roam: true,
       center: ["50%", "50%"],
       radius: ["5%", "85%"],
@@ -239,17 +282,17 @@ export function createTree(data, f) {
   return option;
 }
 
-export async function renderTree(path, f, format) {
+export async function renderTree(path, f, format, aggr) {
   path = join(path, ".previous_versions");
   var diffs = fs.readFileSync(join(path, ".diffs.json"), "utf8");
   diffs = JSON.parse(diffs);
-  var changes_frequency = computeFieldFrequency(diffs);
+  var changes_frequency = computeFieldFrequency(diffs, path,aggr);
   fs.writeFileSync(
     join(path, ".changes_frequency.json"),
     JSON.stringify(changes_frequency)
   );
 
-  // console.log(changes_frequency);
+
   var chartOptions = createTree(changes_frequency, f);
 
   if (format == "html" || !format) {
@@ -294,6 +337,7 @@ export async function renderTree(path, f, format) {
                   window.addEventListener('resize', function() {
                     chart.resize();
                   });
+                 
          </script>
       </body>
       </html>`
@@ -405,4 +449,68 @@ export async function renderTree(path, f, format) {
     process.exit(0);
     // open(join(path, "..", "apivol-outputs", "changes-visualization.svg"));
   }
+}
+
+function addBreakingChanges(path) {}
+function formatBreakingChanges(path) {
+  var breaking = fs.readFileSync(join(path, ".breaking.json"));
+  breaking = JSON.parse(breaking)
+    .map((diff) => {
+      return {
+        breaking: diff.breaking,
+        commit_date: new Date(diff.commit_date),
+      };
+    })
+    .flat(1);
+
+  // in the case where many changes are starting by "api-path-removed" and they have the same path , we merge them and count how many changes are in the same path and aggregate the 'operation' field in an array
+  var mergedBreaking = [];
+  var merged = false;
+  breaking.forEach((element) => {
+    merged = false;
+    mergedBreaking.forEach((mergedElement) => {
+      if (
+        element.path === mergedElement.path &&
+        element.code === mergedElement.code
+      ) {
+        mergedElement.count++;
+        if (!mergedElement.operation.includes(element.operation))
+          mergedElement.operation.push(element.operation);
+        merged = true;
+      }
+    });
+    if (!merged) {
+      element.count = 1;
+      element.operation = [element.operation];
+      mergedBreaking.push(element);
+    }
+  });
+
+  return mergedBreaking;
+}
+
+function color(method) {
+  switch (method) {
+    case "get":
+      return "#0AA40D";
+    case "post":
+      return "#F3C142";
+    case "put":
+      return "#6dc0e3";
+    case "delete":
+      return "#FF0000";
+    case "patch":
+      return "#d6c9d4";
+    case "options":
+      return "#d6c9d4";
+    case "head":
+      return "#d6c9d4";
+    case "trace":
+      return "#d6c9d4";
+    case "connect":
+      return "#0000ff";
+    case "any":
+      return "#fff";
+  }
+  return "#000000";
 }

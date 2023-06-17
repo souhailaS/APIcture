@@ -69,13 +69,16 @@ program
   .option("-o, --output <path>", "Path to the output directory")
   .option("-f, --format <format>", "Output format")
   .option("-freq, --frequency <frequency>", "Minimum frequency of changes")
+  .option("-d, --details", "Show details")
+  
   .action(async (options) => {
     message();
     const repoPath = options.repo || process.cwd();
     try {
       await fetchHistory(repoPath);
       await computeDiff(repoPath);
-      await renderTree(repoPath, options.format);
+      var aggregate = options.details ? false : true;
+      await renderTree(repoPath,  options.frequency, options.format,aggregate);
     } catch (err) {
       console.log(err);
     }

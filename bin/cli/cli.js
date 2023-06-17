@@ -25,6 +25,7 @@ import { renderTree } from "../create_changes_tree.js";
 import { computeSizeMetrics } from "../metrics.js";
 import { renderMetrics } from "../create_metrics_charts.js";
 import { computeOverallGrowthMetrics } from "../overall_metrics.js";
+import { renderReport } from "../render_report.js";
 
 import chalk from "chalk";
 
@@ -46,7 +47,7 @@ program
     const format = options.format || "html";
     const filename = options.filename || "evolution-visualization";
     try {
-      await fetchHistory(repoPath);
+      // await fetchHistory(repoPath);
       console.log();
       await computeDiff(repoPath);
       console.log(
@@ -134,8 +135,11 @@ program
   .action(async (options) => {
     message();
     const repoPath = options.repo || process.cwd();
-    const overrAll = await computeOverallGrowthMetrics(repoPath);
-   
+    await fetchHistory(repoPath);
+    await computeDiff(repoPath);
+    var metrics = await computeSizeMetrics(repoPath);
+    const overrAll = await computeOverallGrowthMetrics(repoPath, metrics);
+    renderReport(overrAll);
   });
 
 function message() {

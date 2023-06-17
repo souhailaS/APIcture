@@ -31,8 +31,8 @@ export function detectChanges(versions){
         if(semver.valid(versions[i].version) && semver.valid(versions[i+1].version)){
             var from = versions[i].version;
             var to = versions[i+1].version;
-            var upgrade_type = semver.diff(from, to);
-            if(upgrade_type){
+            var upgrade_type = semver.diff(from, to) || "none";
+            // if(upgrade_type){
             var from_release_type =  versions[i].version_format_class;
             var to_release_type = versions[i+1].version_format_class;
             var commit_date = versions[i+1].commit_date;
@@ -53,7 +53,7 @@ export function detectChanges(versions){
                 to_hash: to_hash,
                 backwards: semver.gt(from, to)
             });
-        }
+        // }
         }
     }
     return upgrades;

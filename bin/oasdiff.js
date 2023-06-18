@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * 
+ *
  * This script computes the diffs between the OAS files in the repository.
  * It also extracts the breaking and non breaking changes.
- * 
+ *
  */
 import util from "util";
 import child_process from "child_process";
@@ -156,7 +156,7 @@ export async function computeDiff(path) {
         // if (error.reason != "duplicated mapping key") console.log(error);
       }
 
-      if (i < api_commits.length-1) {
+      if (i < api_commits.length - 1) {
         i++;
         return await next_pair(i);
       } else {
@@ -171,41 +171,24 @@ export async function computeDiff(path) {
     }
   };
 
-   await next_pair(1);
+  await next_pair(1);
   //  bar.stop();
-   return 
+  return;
 }
 
 async function extractNonBreakingChanges(diff) {
-  var nonBreakingChanges = {
-    "api title added": 0,
-    "api title modified": 0,
-    "api description added": 0,
-    "api description modified": 0,
-    "api version added": 0,
-    "api version modified": 0,
-    "api contact deleted": 0,
-    "api contact added": 0,
-    "api contact modified": 0,
-    "api license deleted": 0,
-    "api license added": 0,
-    "api license modified": 0,
-    "server deleted": 0,
-    "server added": 0,
-    "server modified": 0,
-    "path added": 0,
-    "path parameter added": 0,
-    "path parameter deleted": 0,
-    "path parameter modified": 0,
-  };
-
-  // INFO CHANGE FEATURES
-  // API TITLE CHANGE FEATURES
+  var nonBreakingChanges = {};
   if (diff.info) {
     if (diff.info.title) {
       if (diff.info.title.from == "" && diff.info.title.to != "") {
-        nonBreakingChanges["api title added"]++;
-      } else nonBreakingChanges["api title modified"]++;
+        if (nonBreakingChanges["api title added"]) {
+          nonBreakingChanges["api title added"]++;
+        }
+      } else if (nonBreakingChanges["api title modified"]) {
+        nonBreakingChanges["api title modified"]++;
+      } else {
+        nonBreakingChanges["api title modified"] = 1;
+      }
     }
     // API DESCRIPTION CHANGE FEATURES
     if (diff.info.description) {
@@ -216,39 +199,102 @@ async function extractNonBreakingChanges(diff) {
     // API VERSION CHANGE FEATURES
     if (diff.info.version) {
       if (diff.info.version.from == "" && diff.info.version.to != "") {
-        nonBreakingChanges["api version added"]++;
-      } else nonBreakingChanges["api version modified"]++;
+        if (nonBreakingChanges["api version added"]) {
+          nonBreakingChanges["api version added"]++;
+        } else {
+          nonBreakingChanges["api version added"] = 1;
+        }
+      }
+      if (diff.info.version.from != "" && diff.info.version.to != "") {
+        if (nonBreakingChanges["api version modified"]) {
+          nonBreakingChanges["api version modified"]++;
+        } else {
+          nonBreakingChanges["api version modified"] = 1;
+        }
+      }
+
+      if (diff.info.version.from != "" && diff.info.version.to == "") {
+        if (nonBreakingChanges["api version deleted"]) {
+          nonBreakingChanges["api version deleted"]++;
+        } else {
+          nonBreakingChanges["api version deleted"] = 1;
+        }
+      }
     }
     // API CONTACT CHANGE FEATURES
     if (diff.info.contact) {
-      if (diff.info.contact.delete) nonBreakingChanges["api contact deleted"]++;
+      if (diff.info.contact.delete)
+        if (nonBreakingChanges["api contact deleted"]) {
+          nonBreakingChanges["api contact deleted"]++;
+        } else {
+          nonBreakingChanges["api contact deleted"] = 1;
+        }
       else if (diff.info.contact.added)
-        nonBreakingChanges["api contact added"]++;
+        if (nonBreakingChanges["api contact added"]) {
+          nonBreakingChanges["api contact added"]++;
+        } else {
+          nonBreakingChanges["api contact added"] = 1;
+        }
       else if (diff.info.contact.modified)
-        nonBreakingChanges["api contact modified"]++;
+        if (nonBreakingChanges["api contact modified"]) {
+          nonBreakingChanges["api contact modified"]++;
+        } else {
+          nonBreakingChanges["api contact modified"] = 1;
+        }
     }
     // API LICENSE CHANGE FEATURES
     if (diff.info.license) {
-      if (diff.info.license.delete) nonBreakingChanges["api license deleted"]++;
+      if (diff.info.license.delete)
+        if (nonBreakingChanges["api license deleted"]) {
+          nonBreakingChanges["api license deleted"]++;
+        } else {
+          nonBreakingChanges["api license deleted"] = 1;
+        }
       else if (diff.info.license.added)
-        nonBreakingChanges["api license added"]++;
+        if (nonBreakingChanges["api license added"]) {
+          nonBreakingChanges["api license added"]++;
+        } else {
+          nonBreakingChanges["api license added"] = 1;
+        }
       else if (diff.info.license.modified)
-        nonBreakingChanges["api license modified"]++;
+        if (nonBreakingChanges["api license modified"]) {
+          nonBreakingChanges["api license modified"]++;
+        } else {
+          nonBreakingChanges["api license modified"] = 1;
+        }
     }
 
     // SERVER CHANGE FEATURES
     if (diff.info.servers) {
-      if (diff.info.servers.delete) nonBreakingChanges["server deleted"]++;
-      else if (diff.info.servers.added) nonBreakingChanges["server added"]++;
+      if (diff.info.servers.delete)
+        if (nonBreakingChanges["server deleted"]) {
+          nonBreakingChanges["server deleted"]++;
+        } else {
+          nonBreakingChanges["server deleted"] = 1;
+        }
+      else if (diff.info.servers.added)
+        if (nonBreakingChanges["server added"]) {
+          nonBreakingChanges["server added"]++;
+        } else {
+          nonBreakingChanges["server added"] = 1;
+        }
       else if (diff.info.servers.modified)
-        nonBreakingChanges["server modified"]++;
+        if (nonBreakingChanges["server modified"]) {
+          nonBreakingChanges["server modified"]++;
+        } else {
+          nonBreakingChanges["server modified"] = 1;
+        }
     }
   }
 
   // PATH CHANGE FEATURES
   if (diff.paths) {
     if (diff.paths.added)
-      nonBreakingChanges["path added"] += diff.paths.added.length;
+      if (nonBreakingChanges["path added"]) {
+        nonBreakingChanges["path added"] += diff.paths.added.length;
+      } else {
+        nonBreakingChanges["path added"] = diff.paths.added.length;
+      }
     if (diff.paths.modified) {
       var modifications = Object.values(diff.paths.modified);
       var operations = modifications
@@ -277,6 +323,14 @@ async function extractNonBreakingChanges(diff) {
             }
           }
 
+          if (method[keys].operationId) {
+            var change = `operationId of ${keys} modified`;
+            if (!nonBreakingChanges[change]) {
+              nonBreakingChanges[change] = 1;
+            } else {
+              nonBreakingChanges[change]++;
+            }
+          }
           if (method[keys].summary) {
             var change = `summary of ${keys} modified`;
             if (!nonBreakingChanges[change]) {
@@ -437,6 +491,145 @@ async function extractNonBreakingChanges(diff) {
                 }
               });
             }
+          }
+
+          if (method[keys].requestBody?.content?.mediaTypeModified) {
+            var content = method[keys].requestBody.content.mediaTypeModified;
+            if (content) {
+              var schemas = Object.values(content)
+                .map((c) => {
+                  return c.schema;
+                })
+                .flat()
+                .filter((c) => c);
+
+              schemas.forEach((c) => {
+                if (c.description) {
+                  var change = `desc schema of request modified`;
+                  //`desc schema of response ${key}/${keys} modified`;
+                  if (!nonBreakingChanges[change]) {
+                    nonBreakingChanges[change] = 1;
+                  } else {
+                    nonBreakingChanges[change]++;
+                  }
+                }
+                if (c.title) {
+                  // `title schema of response ${key}/${keys} modified`
+                  var change = `title schema of request modified`;
+                  if (!nonBreakingChanges[change]) {
+                    nonBreakingChanges[change] = 1;
+                  } else {
+                    nonBreakingChanges[change]++;
+                  }
+                }
+                if (c.required) {
+                  var requiredAction = Object.values(c.required);
+                  if (requiredAction) {
+                    var deleted = requiredAction.filter((r) => {
+                      return r.deleted;
+                    });
+
+                    var change =
+                      //`unrequired schema property of response ${key}/${keys} modified`;
+                      `unrequired schema property of request`;
+                    if (!nonBreakingChanges[change]) {
+                      nonBreakingChanges[change] = deleted.length;
+                    } else {
+                      nonBreakingChanges[change] += deleted.length;
+                    }
+                  }
+                }
+
+                // these are breaking changes
+
+                // if (c.type) {
+                //   var change = `type of schema modified`;
+                //   //`type schema of response ${key}/${keys} modified`;
+                //   if (!nonBreakingChanges[change]) {
+                //     nonBreakingChanges[change] = 1;
+                //   } else {
+                //     nonBreakingChanges[change]++;
+                //   }
+                // }
+
+                // if (c.format) {
+                //   var change = `format of schema modified`;
+                //   // `format schema of response ${key}/${keys} modified`;
+                //   if (!nonBreakingChanges[change]) {
+                //     nonBreakingChanges[change] = 1;
+                //   } else {
+                //     nonBreakingChanges[change]++;
+                //   }
+                // }
+
+                if (c.properties) {
+                  if (c.properties.added) {
+                    var change = `property added to schema of request`;
+                    //`property added to schema of response ${key}/${keys}`;
+                    if (!nonBreakingChanges[change]) {
+                      nonBreakingChanges[change] = 1;
+                    } else {
+                      nonBreakingChanges[change]++;
+                    }
+                  }
+                }
+              });
+            }
+          }
+
+          if (method[keys].parameters?.modified) {
+            var parameters = Object.values(method[keys].parameters.modified);
+            parameters.forEach((p) => {
+              if (p.description) {
+                var change = `desc of parameter modified`;
+                //`desc of parameter ${key}/${keys} modified`;
+                if (!nonBreakingChanges[change]) {
+                  nonBreakingChanges[change] = 1;
+                } else {
+                  nonBreakingChanges[change]++;
+                }
+              }
+              if (p.body) {
+                if (p.body.schema) {
+                  var schema = p.body.schema;
+                  if (schema?.additionalPropertiesAllowed) {
+                    if (
+                      schema?.additionalPropertiesAllowed?.from == null ||
+                      schema?.additionalPropertiesAllowed?.to == false
+                    ) {
+                      var change = `additional properties from null to false`;
+                      //`additional properties not allowed for parameter ${key}/${keys}`;
+                      if (!nonBreakingChanges[change]) {
+                        nonBreakingChanges[change] = 1;
+                      } else {
+                        nonBreakingChanges[change]++;
+                      }
+                    }
+                    if (
+                      schema?.additionalPropertiesAllowed?.from == false ||
+                      schema?.additionalPropertiesAllowed?.to == true
+                    ) {
+                      var change = `additional properties from false to true`;
+                      //`additional properties allowed for parameter ${key}/${keys}`;
+                      if (!nonBreakingChanges[change]) {
+                        nonBreakingChanges[change] = 1;
+                      } else {
+                        nonBreakingChanges[change]++;
+                      }
+                    }
+                  } else if (schema?.additionalProperties) {
+                  }
+                }
+              } else if (Object.keys(p).length > 0) {
+                var change = `body of parameter modified`;
+                //`body of parameter ${key}/${keys} modified`;
+                if (!nonBreakingChanges[change]) {
+                  nonBreakingChanges[change] = 1;
+                } else {
+                  nonBreakingChanges[change]++;
+                }
+              }
+            });
           }
         });
 

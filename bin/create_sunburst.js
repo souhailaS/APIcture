@@ -120,7 +120,7 @@ async function createSunburst(
     // value: 1,
     // item style
     itemStyle: {
-      // color: "", // green
+      color: "#fff", // green
       //   borderColor: "#000",
       //   borderWidth: 1,
       //   borderType: "solid",
@@ -173,46 +173,43 @@ async function createSunburst(
   var total_changes = 0;
   var breakingChanges = breakings.find((d) => d.hash == commit.hash);
   if (breakingChanges?.breaking.length > 0) {
+    // console.log(breakingChanges.breaking);
     total_changes += breakingChanges.breaking.length;
     breaking.value = breakingChanges.breaking.length;
 
     // breaking.name = "Breaking Changes";
 
-    try {
-      breakingChanges.breaking.forEach((diff) => {
-        var breaking_change = {
-          name: diff.id
-            .replaceAll(/-/g, " ")
-            .replaceAll("api", "")
-            .replaceAll("deprecation", "depr")
-            .replaceAll("request", "req")
-            .replaceAll("response", "res")
-            .replaceAll("responses", "res")
-            .replaceAll("parameter", "param")
-            .replaceAll("optional", "opt"),
-          original: diff.id,
-          value: 1,
-          itemStyle: {
-            color: "#B30000",
-          },
-          collapsed: true,
-          breaking: true,
-        };
-        // if not already added
-        var breaking_change_data = breaking.children.find(
-          (d) => d.original == diff.id
-        );
-        if (!breaking_change_data) {
-          breaking.children.push(breaking_change);
-        } else {
-          breaking_change_data.value++;
-        }
-      });
+    breakingChanges.breaking.forEach((diff) => {
+      var breaking_change = {
+        name: diff.id
+          .replaceAll(/-/g, " ")
+          .replaceAll("api", "")
+          .replaceAll("deprecation", "depr")
+          .replaceAll("request", "req")
+          .replaceAll("response", "res")
+          .replaceAll("responses", "res")
+          .replaceAll("parameter", "param")
+          .replaceAll("optional", "opt"),
+        original: diff.id,
+        value: 1,
+        itemStyle: {
+          color: "#B30000",
+        },
+        collapsed: true,
+        breaking: true,
+      };
+      // if not already added
+      var breaking_change_data = breaking.children.find(
+        (d) => d.original == diff.id
+      );
+      if (!breaking_change_data) {
+        breaking.children.push(breaking_change);
+      } else {
+        breaking_change_data.value++;
+      }
+    });
 
-      commit_version.children.push(breaking);
-    } catch (err) {
-      // console.log(err);
-    }
+    commit_version.children.push(breaking);
   }
 
   var non_breaking = {
@@ -230,6 +227,7 @@ async function createSunburst(
   );
   if (non_breaking_changes_arr) {
     // number of non breaking changes
+    // console.log(non_breaking_changes_arr);
     var non_breaking_changes = Object.values(
       non_breaking_changes_arr.nonBreakingChanges
     ).reduce((a, b) => a + b, 0);
@@ -268,10 +266,11 @@ async function createSunburst(
     total_changes += non_breaking_changes;
   }
 
-  if (total_changes > 0) {
-    commit_version.value = total_changes;
-    // commit_version.name += " (" + total_changes + ")";
-  }
+  // if (total_changes > 0) {
+  commit_version.value = total_changes;
+  // commit_version.name += " (" + total_changes + ")";
+  // console.log(commit_version.name, total_changes);
+  // }
   return data;
 }
 
@@ -321,28 +320,31 @@ export async function generateChangesViz(path, format) {
   var i = 0;
   var nextCommit = async function (commit) {
     var previous_version = null;
+    try {
+      if (i > 0) {
+        var previous_content = await SwaggerParser.parse(
+          join(path, commits[i - 1].hash + "." + commit.fileExtension)
+        );
+        previous_version = previous_content.info.version;
+      }
 
-    if (i > 0) {
-      var previous_content = await SwaggerParser.parse(
-        join(path, commits[i - 1].hash + "." + commit.fileExtension)
+      var content = await SwaggerParser.parse(
+        join(path, commit.hash + "." + commit.fileExtension)
       );
-      previous_version = previous_content.info.version;
+
+      await createSunburst(
+        commit,
+        data,
+        previous_version,
+        color_dict,
+        breakings,
+        nonBreaking,
+        content
+      );
+    } catch (e) {
+      // console.log(e)
     }
     i = i + 1;
-
-    var content = await SwaggerParser.parse(
-      join(path, commit.hash + "." + commit.fileExtension)
-    );
-
-    await createSunburst(
-      commit,
-      data,
-      previous_version,
-      color_dict,
-      breakings,
-      nonBreaking,
-      content
-    );
     if (i < commits.length) {
       return await nextCommit(commits[i]);
     } else {

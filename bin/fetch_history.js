@@ -9,6 +9,8 @@ import fs from "fs";
 import { join } from "path";
 import SwaggerParser from "@apidevtools/swagger-parser";
 import simpleGit from "simple-git";
+import cliselect from "cli-select";
+import chalk from "chalk";
 
 export const fetchHistory = async (repoPath) => {
   const files = fs.readdirSync(repoPath);
@@ -26,48 +28,18 @@ export const fetchHistory = async (repoPath) => {
     }
   });
 
+  console.log("|- Fetching history of the repository");
+
   var validOAS = await Promise.all(yamlJson);
   validOAS = validOAS.filter((oas) => oas !== false);
 
-  // get all the versions of the oas file
-  async function getPreviousVersionsOfFile(repositoryPath, filePath) {
-    const git = simpleGit(repositoryPath);
+  console.log(
+    "|- " +
+      validOAS.length +
+      " OAS files found in the root directory of the repo"
+  );
 
-    const logOptions = [
-      "--follow",
-      "--name-only",
-      "--pretty=format:%H",
-      "--",
-      filePath,
-    ];
-    const log = await git.log(logOptions);
-    const commits = log.all[0].hash.split("\n");
-
-    var hashes = commits.filter((commit, index) => {
-      return index % 3 === 0;
-    });
-
-    const previousVersions = [];
-    for (const commit of hashes) {
-      try {
-        const fileContent = await git.catFile(["-p", `${commit}:${filePath}`]);
-        // get file extension
-        const fileExtension = filePath.split(".").pop();
-        // get commit date
-        const commitDate = await git.show(["-s", "--format=%ci", commit]);
-        previousVersions.push({
-          hash: commit,
-          content: fileContent,
-          date: commitDate,
-          fileExtension: fileExtension,
-        });
-      } catch (err) {
-        // console.log(err)
-      }
-    }
-    return previousVersions;
-  }
-
+  // use cli-select to select the oas file to use
   // if no OAS file is found in the root directory of the repo throw an exception
   if (validOAS.length === 0) {
     // code 100
@@ -76,41 +48,92 @@ export const fetchHistory = async (repoPath) => {
     err.name = "NoOASFileFound";
     throw err;
   }
-  if (validOAS.length == 1) {
-    console.log("|- One OAS file found in the root directory of the repo:" + validOAS[0].oaspath);
-    var previousVersions = await getPreviousVersionsOfFile(
-      repoPath,
-      validOAS[0].oaspath
-    );
 
-    var data = previousVersions.map((version) => {
-      return {
-        // version.date, store the date in date format
-        commit_date: new Date(version.date),
-        hash: version.hash,
-        fileExtension: version.fileExtension,
-      };
-    });
+  var selected = await cliselect({
+    values: validOAS.map((oas) => oas.oaspath),
+    valueRenderer: (value, selected) => {
+      if (selected) {
+        return chalk.underline(value);
+      }
+      return value;
+    },
+  });
 
-    previousVersions.sort((a, b) => {
-      return new Date(a.date) - new Date(b.date);
-    });
+  validOAS = validOAS.filter( (f) => f.oaspath == selected.value);
+  var previousVersions = await getPreviousVersionsOfFile(
+    repoPath,
+    validOAS[0].oaspath
+  );
 
-    fs.mkdirSync(join(repoPath, ".previous_versions"), { recursive: true });
+  var data = previousVersions.map((version) => {
+    return {
+      // version.date, store the date in date format
+      commit_date: new Date(version.date),
+      hash: version.hash,
+      fileExtension: version.fileExtension,
+    };
+  });
+
+  previousVersions.sort((a, b) => {
+    return new Date(a.date) - new Date(b.date);
+  });
+
+  fs.mkdirSync(join(repoPath, ".previous_versions"), { recursive: true });
+  fs.writeFileSync(
+    join(repoPath, ".previous_versions", ".api_commits.json"),
+    JSON.stringify(data)
+  );
+
+  previousVersions.forEach((version) => {
     fs.writeFileSync(
-      join(repoPath, ".previous_versions", ".api_commits.json"),
-      JSON.stringify(data)
+      join(
+        repoPath,
+        ".previous_versions",
+        `${version.hash}.${version.fileExtension}`
+      ),
+      version.content
     );
-
-    previousVersions.forEach((version) => {
-      fs.writeFileSync(
-        join(
-          repoPath,
-          ".previous_versions",
-          `${version.hash}.${version.fileExtension}`
-        ),
-        version.content
-      );
-    });
-  }
+  });
 };
+
+// get all the versions of the oas file
+async function getPreviousVersionsOfFile(repositoryPath, filePath) {
+  const git = simpleGit(repositoryPath);
+
+  console.log("|- Fetching history of the file: " + filePath);
+  const logOptions = [
+    "--name-only",
+    "--pretty=format:%H",
+    "--follow",
+    "--",
+    filePath,
+  ];
+
+  const log = await git.log(logOptions);
+  // console.log(log);
+  const commits = log.all[0].hash.split("\n");
+  // console.log(commits);
+  var hashes = commits.filter((commit, index) => {
+    return index % 3 === 0;
+  });
+
+  const previousVersions = [];
+  for (const commit of hashes) {
+    try {
+      const fileContent = await git.catFile(["-p", `${commit}:${filePath}`]);
+      // get file extension
+      const fileExtension = filePath.split(".").pop();
+      // get commit date
+      const commitDate = await git.show(["-s", "--format=%ci", commit]);
+      previousVersions.push({
+        hash: commit,
+        content: fileContent,
+        date: commitDate,
+        fileExtension: fileExtension,
+      });
+    } catch (err) {
+      // console.log(err)
+    }
+  }
+  return previousVersions;
+}

@@ -47,9 +47,8 @@ program
     const format = options.format || "html";
     const filename = options.filename || "evolution-visualization";
     try {
-      // await fetchHistory(repoPath);
-      console.log();
-      await computeDiff(repoPath);
+      await fetchHistory(repoPath);
+     await computeDiff(repoPath);
       console.log(
         `|- Rendering sunburst chart in [${format.toUpperCase()}] format`
       );
@@ -79,6 +78,7 @@ program
       await computeDiff(repoPath);
       var aggregate = options.details ? false : true;
       await renderTree(repoPath,  options.frequency, options.format,aggregate);
+
     } catch (err) {
       console.log(err);
     }
@@ -91,7 +91,6 @@ program
     "-r, --repo <path>",
     "Path to the repository. Defaults to current working directory."
   )
-
   .option("-o, --output <path>", "Path to the output directory")
   .option("-f, --format <format>", "Output format")
   .option("-e, --endpoints", "Show endpoints")

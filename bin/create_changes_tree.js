@@ -286,12 +286,11 @@ export async function renderTree(path, f, format, aggr) {
   path = join(path, ".previous_versions");
   var diffs = fs.readFileSync(join(path, ".diffs.json"), "utf8");
   diffs = JSON.parse(diffs);
-  var changes_frequency = computeFieldFrequency(diffs, path,aggr);
+  var changes_frequency = computeFieldFrequency(diffs, path, aggr);
   fs.writeFileSync(
     join(path, ".changes_frequency.json"),
     JSON.stringify(changes_frequency)
   );
-
 
   var chartOptions = createTree(changes_frequency, f);
 

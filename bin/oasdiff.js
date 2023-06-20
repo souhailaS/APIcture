@@ -85,6 +85,13 @@ export async function computeDiff(path) {
   });
 
   var next_pair = async (i) => {
+    // console.log(
+    //   chalk.blue(
+    //     `|-- Computing diff between ${api_commits[i - 1].hash} and ${
+    //       api_commits[i].hash
+    //     }`
+    //   )
+    // );
     bar.update(i);
     if (api_commits[i]) {
       try {
@@ -490,6 +497,17 @@ async function extractNonBreakingChanges(diff) {
                   }
                 }
               });
+            }
+          }
+
+          if (method[keys].tags) {
+            if (method[keys].tags.added || method[keys].tags.deleted) {
+              var change = `tags of ${keys} modified`;
+              if (!nonBreakingChanges[change]) {
+                nonBreakingChanges[change] = 1;
+              } else {
+                nonBreakingChanges[change]++;
+              }
             }
           }
 

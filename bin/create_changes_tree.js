@@ -90,54 +90,7 @@ export function getMaxValue(data) {
 }
 
 function convert(o, f, data) {
-  // formattr for the name that have more than 10 characters
-
-  if (o.name == "servers") {
-    if (o.children) {
-      o.children.map((c) => {
-        c.children = [];
-      });
-    }
-  }
-
-  if (o.name == "responses") {
-    o.formatter = function (params) {
-      return "resp";
-    };
-  }
-
-  if (o.children != undefined) {
-    if (o.children.length == 0 || o["value"] < f) {
-      delete o.children;
-    } else {
-      o.children.map((c) => convert(c, f, data));
-    }
-  }
-
-  if (o.children == undefined) {
-    if (o["value"] == undefined) {
-      o["value"] = 0;
-    }
-  } else {
-    o["value"] = o.children.reduce((a, c) => a + c["value"] || 0, 0);
-  }
-
-  if (o.name == "securityRequirements") {
-    o.name = "securityReq";
-  }
-
-  if (o.name == "OPTIONS") {
-    o.name = "OPT";
-  }
-
-  if (o.name == "description") {
-    o.name = "desc";
-  }
-
-  if (o.name == "parameters") {
-    o.name = "params";
-  }
-
+  // labels
   o.label = {};
 
   o.label = {
@@ -166,6 +119,7 @@ function convert(o, f, data) {
     };
   }
 
+  // formattr for the name that have more than 10 characters
   //replace the action with the color
   if (o.name == "modified" || o.name == "mediaTypeModified") {
     o.itemStyle = {
@@ -207,9 +161,11 @@ function convert(o, f, data) {
       show: false,
     };
   } else {
-    o.itemStyle = {
-      color: pick_color(grays, o["value"], data),
-    };
+    
+    if (!o.itemStyle)
+      o.itemStyle = {
+        color: "#000", // pick_color(grays, o["value"], data),
+      };
     if (
       ["get", "post", "put", "delete", "patch", "head", "options"].includes(
         o.name.toLowerCase()
@@ -219,6 +175,91 @@ function convert(o, f, data) {
         color: color(o.name.toLowerCase()),
       };
     }
+  }
+
+  //////////////
+
+  if (o.name == "servers") {
+    if (o.children) {
+      o.children.map((c) => {
+        c.children = [];
+      });
+    }
+    o.itemStyle = {
+      color: "#C8C8C8",
+    };
+  }
+
+  if (o.name == "version") {
+    o.itemStyle = {
+      color: "#C8C8C8",
+    };
+  }
+
+  if (o.name == "summary") {
+    o.itemStyle = {
+      color: "#C8C8C8",
+    };
+  }
+
+  if (o.name == "tags") {
+    o.itemStyle = {
+      color: "#C8C8C8",
+    };
+  }
+
+  if (o.name == "contact") {
+    o.itemStyle = {
+      color: "#C8C8C8",
+    };
+  }
+
+  if (o.name == "responses") {
+    o.formatter = function (params) {
+      return "resp";
+    };
+  }
+
+  if (o.children != undefined) {
+    if (o.children.length == 0 || o["value"] < f) {
+      delete o.children;
+    } else {
+      o.children.map((c) => convert(c, f, data));
+    }
+  }
+
+  if (o.children == undefined) {
+    if (o["value"] == undefined) {
+      o["value"] = 0;
+    }
+  } else {
+    o["value"] = o.children.reduce((a, c) => a + c["value"] || 0, 0);
+  }
+
+  if (o.name == "securityRequirements") {
+    o.name = "securityReq";
+  }
+
+  if (o.name == "OPTIONS") {
+    o.name = "OPT";
+  }
+
+  if (o.name == "description") {
+    o.name = "desc";
+    o.itemStyle = {
+      // grey color
+      color: "#C8C8C8",
+    };
+  }
+
+  if (o.name == "info") {
+    o.itemStyle = {
+      color: "#C8C8C8",
+    };
+  }
+
+  if (o.name == "parameters") {
+    o.name = "params";
   }
 
   return o;
@@ -282,8 +323,8 @@ export function createTree(data, f) {
   return option;
 }
 
-export async function renderTree(path, f, format, aggr) {
-  path = join(path, ".previous_versions");
+export async function renderTree(path, f, format, aggr, oaspath,output) {
+  path = join(path, ".previous_versions", oaspath.split(".")[0] );
   var diffs = fs.readFileSync(join(path, ".diffs.json"), "utf8");
   diffs = JSON.parse(diffs);
   var changes_frequency = computeFieldFrequency(diffs, path, aggr);
@@ -294,7 +335,7 @@ export async function renderTree(path, f, format, aggr) {
 
   var chartOptions = createTree(changes_frequency, f);
 
-  if (format == "html" || !format) {
+  if (format == "html" || !format || format == "echarts") {
     chartOptions.toolbox = {
       orient: "horizontal",
       show: true,
@@ -380,7 +421,8 @@ export async function renderTree(path, f, format, aggr) {
         join(path, "..", "apivol-outputs", "changes-visualization.html")
       )
     );
-    open(join(path, "..", "apivol-outputs", "changes-visualization.html"));
+    // open(join(path, "..", "apivol-outputs", "changes-visualization.html"));
+    return chartOptions;
   }
 
   // PNG output
@@ -450,7 +492,6 @@ export async function renderTree(path, f, format, aggr) {
   }
 }
 
-function addBreakingChanges(path) {}
 function formatBreakingChanges(path) {
   var breaking = fs.readFileSync(join(path, ".breaking.json"));
   breaking = JSON.parse(breaking)

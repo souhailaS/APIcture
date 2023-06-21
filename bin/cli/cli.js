@@ -18,15 +18,16 @@
 import { Command } from "commander";
 const program = new Command();
 import { execSync } from "child_process";
-import { fetchHistory } from "../fetch_history.js";
+import { fetchHistory, fetchOASFiles } from "../fetch_history.js";
 import { computeDiff } from "../oasdiff.js";
 import { generateChangesViz } from "../create_sunburst.js";
 import { renderTree } from "../create_changes_tree.js";
+
 import { computeSizeMetrics } from "../metrics.js";
 import { renderMetrics } from "../create_metrics_charts.js";
 import { computeOverallGrowthMetrics } from "../overall_metrics.js";
 import { renderReport } from "../render_report.js";
-
+import { renderAllCharts } from "../render_all_viz.js";
 import chalk from "chalk";
 
 // program.name("apict").description("CLI").version("0.0.1");
@@ -40,6 +41,8 @@ program
   )
   .option("-o, --output <path>", "Path to the output directory")
   .option("-f, --format <format>", "Output format")
+  .option("-fs, --fast", "Fast mode")
+  .option("-a, --all", "Generate OAS for all OAS files found in the repo")
   .action(async (options) => {
     message();
     const repoPath = options.repo || process.cwd();
@@ -47,12 +50,41 @@ program
     const format = options.format || "html";
     const filename = options.filename || "evolution-visualization";
     try {
-      await fetchHistory(repoPath);
-     await computeDiff(repoPath);
-      console.log(
-        `|- Rendering sunburst chart in [${format.toUpperCase()}] format`
-      );
-      await generateChangesViz(repoPath, format);
+      var oasFiles = [];
+      if (!options.fast) {
+        oasFiles = await fetchOASFiles(repoPath, options.all);
+
+        var nextFile = async (i) => {
+          var history_metadata = await fetchHistory(
+            repoPath,
+            oasFiles[i].oaspath
+          );
+          console.log(history_metadata);
+          await computeDiff(repoPath, oasFiles[i].oaspath);
+
+          await generateChangesViz(
+            repoPath,
+            format,
+            oasFiles[i].oaspath,
+            options.output,
+            history_metadata
+          );
+          console.log(
+            `|- Rendering sunburst chart in [${format.toUpperCase()}] format for ${
+              oasFiles[i].oaspath
+            }`
+          );
+          i++;
+          if (i < oasFiles.length) {
+            nextFile(i);
+          } else {
+            return true;
+          }
+        };
+        await nextFile(0);
+      }
+
+      //
     } catch (err) {
       console.log(err);
     }
@@ -69,7 +101,8 @@ program
   .option("-f, --format <format>", "Output format")
   .option("-freq, --frequency <frequency>", "Minimum frequency of changes")
   .option("-d, --details", "Show details")
-  
+  .option("-a, --all", "Generate OAS for all OAS files found in the repo")
+
   .action(async (options) => {
     message();
     const repoPath = options.repo || process.cwd();
@@ -77,8 +110,7 @@ program
       await fetchHistory(repoPath);
       await computeDiff(repoPath);
       var aggregate = options.details ? false : true;
-      await renderTree(repoPath,  options.frequency, options.format,aggregate);
-
+      await renderTree(repoPath, options.frequency, options.format, aggregate);
     } catch (err) {
       console.log(err);
     }
@@ -134,11 +166,15 @@ program
   )
   .option("-o, --output <path>", "Path to the output directory")
   .option("-f, --format <format>", "Output format")
+  .option("-fs", "--fast", "Fast mode")
   .action(async (options) => {
     message();
     const repoPath = options.repo || process.cwd();
-    await fetchHistory(repoPath);
-    await computeDiff(repoPath);
+    if (!options.fast) {
+      await fetchHistory(repoPath);
+      await computeDiff(repoPath);
+    }
+
     var metrics = await computeSizeMetrics(repoPath);
     const overrAll = await computeOverallGrowthMetrics(repoPath, metrics);
     renderReport(overrAll);
@@ -170,5 +206,90 @@ function message() {
   );
   console.log();
 }
+
+program
+  .description("Generate changes and versioning visualizations")
+  .option(
+    "-r, --repo <path>",
+    "Path to the repository. Defaults to current working directory."
+  )
+  .option("-o, --output <path>", "Path to the output directory")
+  .option("-f, --format <format>", "Output format")
+  .option("-fs", "--fast", "Fast mode")
+  .option("-a, --all", "Generate OAS for all OAS files found in the repo")
+  .option("-d, --details", "Show details")
+  .option("-freq, --frequency <frequency>", "Minimum frequency of changes")
+  .action(async (options) => {
+    message();
+    const repoPath = options.repo || process.cwd();
+    const outputDir = options.output;
+    const format = options.format || "html";
+    const filename = options.filename || "evolution-visualization";
+    try {
+      var oasFiles = [];
+      if (!options.fast) {
+        oasFiles = await fetchOASFiles(repoPath, options.all);
+
+        var nextFile = async (i) => {
+          var history_metadata = await fetchHistory(
+            repoPath,
+            oasFiles[i].oaspath
+          );
+          // console.log(history_metadata);
+          // console.log(history_metadata);
+          if (history_metadata.total_commits > 10) {
+           await computeDiff(repoPath, oasFiles[i].oaspath);
+
+            var versionsEchart = await generateChangesViz(
+              repoPath,
+              "echarts",
+              oasFiles[i].oaspath,
+              options.output,
+              options.all
+            );
+
+            var changesEcharts = await renderTree(
+              repoPath,
+              options.frequency,
+              "echarts",
+              false,
+              oasFiles[i].oaspath,
+              options.output,
+              history_metadata
+            );
+
+            var to_render = {
+              changesEcharts,
+              versionsEchart,
+              output: outputDir,
+              filename: oasFiles[i].oaspath.split(".")[0],
+              history_metadata
+            };
+
+            renderAllCharts(to_render);
+
+            console.log(
+              `|- Rendering all charts in [html] format for ${oasFiles[i].oaspath}`
+            );
+          } else {
+            console.log(
+              `|- Skipping ${oasFiles[i].oaspath} as it has less than 10 commits`
+            );
+          }
+          i++;
+          if (i < oasFiles.length) {
+            nextFile(i);
+          } else {
+            return true;
+          }
+        };
+        await nextFile(0);
+      }
+
+      //
+    } catch (err) {
+      console.log(err);
+    }
+  });
 
 program.parse(process.argv);

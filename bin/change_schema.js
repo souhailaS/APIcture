@@ -98,7 +98,15 @@ export function computeFieldFrequency(jsonArray, path, aggregate) {
           name: parts[i],
           value: 0,
           children: [],
+
         };
+
+        if(field.includes("schema"))
+        {
+          child.itemStyle={
+            color:'#A0522D'
+          }
+        }
 
         // if (current.name !== "added" && current.name !== "deleted") {
         current.children.push(child);

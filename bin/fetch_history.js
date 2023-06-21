@@ -12,23 +12,33 @@ import simpleGit from "simple-git";
 import cliselect from "cli-select";
 import chalk from "chalk";
 
-export const fetchHistory = async (repoPath) => {
+export const fetchOASFiles = async (repoPath, all) => {
   const files = fs.readdirSync(repoPath);
   const openapiFiles = files.filter((file) => {
     const fileExtension = file.split(".").pop();
-    return fileExtension === "json" || fileExtension === "yaml";
+    return (
+      fileExtension === "json" ||
+      fileExtension === "yaml" ||
+      fileExtension === "yml"
+    );
   });
 
   const yamlJson = openapiFiles.map(async (file) => {
     try {
+      // if(all)
+      // repoPath = join(repoPath,file.split(".")[0], file)
+
       var oas = await SwaggerParser.validate(join(repoPath, file));
       return { oaspath: join(file), oas: oas };
     } catch (err) {
+      console.log(
+        "|- " + chalk.red("Error") + " in parsing " + chalk.underline(file) //+
+        // " : " +
+        // err.message
+      );
       return false;
     }
   });
-
-  console.log("|- Fetching history of the repository");
 
   var validOAS = await Promise.all(yamlJson);
   validOAS = validOAS.filter((oas) => oas !== false);
@@ -49,25 +59,37 @@ export const fetchHistory = async (repoPath) => {
     throw err;
   }
 
-  var selected = await cliselect({
-    values: validOAS.map((oas) => oas.oaspath),
-    valueRenderer: (value, selected) => {
-      if (selected) {
-        return chalk.underline(value);
-      }
-      return value;
-    },
-  });
+  if (!all) {
+    var selected = await cliselect({
+      values: validOAS.map((oas) => oas.oaspath),
+      valueRenderer: (value, selected) => {
+        if (selected) {
+          return chalk.underline(value);
+        }
+        return value;
+      },
+    });
+    validOAS = validOAS.filter((f) => f.oaspath == selected.value);
+  }
 
-  validOAS = validOAS.filter( (f) => f.oaspath == selected.value);
-  var previousVersions = await getPreviousVersionsOfFile(
-    repoPath,
-    validOAS[0].oaspath
-  );
+  return validOAS;
+};
 
+export const fetchHistory = async (repoPath, oaspath) => {
+  var gitRemote = fs.readFileSync(join(repoPath, ".git", "config"), "utf8");
+  gitRemote = gitRemote.split("\n");
+  var remoteUrl = "";
+  for (var j = 0; j < gitRemote.length; j++) {
+    if (gitRemote[j].includes("url")) {
+      remoteUrl = gitRemote[j].split("=")[1].trim();
+    }
+  }
+
+  var history_metadata = {};
+
+  var previousVersions = await getPreviousVersionsOfFile(repoPath, oaspath);
   var data = previousVersions.map((version) => {
     return {
-      // version.date, store the date in date format
       commit_date: new Date(version.date),
       hash: version.hash,
       fileExtension: version.fileExtension,
@@ -79,21 +101,123 @@ export const fetchHistory = async (repoPath) => {
   });
 
   fs.mkdirSync(join(repoPath, ".previous_versions"), { recursive: true });
+  fs.mkdirSync(join(repoPath, ".previous_versions", oaspath.split(".")[0]), {
+    recursive: true,
+  });
+
   fs.writeFileSync(
-    join(repoPath, ".previous_versions", ".api_commits.json"),
+    join(
+      repoPath,
+      ".previous_versions",
+      oaspath.split(".")[0],
+      ".api_commits.json"
+    ),
     JSON.stringify(data)
   );
+  var invalidFiles = [];
+  var apiTitles = [];
+  var uniqueVersion = [];
 
-  previousVersions.forEach((version) => {
+  var nextVersion = async (i) => {
+    var version = previousVersions[i];
+
+    // console.log(version)
+
     fs.writeFileSync(
       join(
         repoPath,
         ".previous_versions",
+        oaspath.split(".")[0],
         `${version.hash}.${version.fileExtension}`
       ),
       version.content
     );
-  });
+    try {
+      
+      const oas = await SwaggerParser.validate(
+        join(
+          repoPath,
+          ".previous_versions",
+          oaspath.split(".")[0],
+          `${version.hash}.${version.fileExtension}`
+        )
+      );
+     
+
+      var title = {
+        title: oas.info?.title,
+        commit_date: version.date,
+        hash: version.hash,
+      };
+      // if the last commit has the same title as this commit then do not add it to the list
+      if (apiTitles.length == 0) apiTitles.push(title);
+      else if (apiTitles[apiTitles.length - 1].title !== title.title)
+        apiTitles.push(title);
+      var api_version = {
+        hash: version.hash,
+        commit_date: version.date,
+        version: oas.info?.version,
+      };
+      // if the last commit has the same version as this commit then do not add it to the list
+      if (uniqueVersion.length == 0) uniqueVersion.push(api_version);
+      else if (
+        uniqueVersion[uniqueVersion.length - 1].version !== api_version.version
+      )
+        uniqueVersion.push(api_version);
+    } catch (err) {
+      console.log(err.message);
+      invalidFiles.push({ hash: version.hash, commit_date: version.date });
+    }
+
+    i++;
+    if (i < previousVersions.length) {
+      await nextVersion(i);
+    } else {
+      history_metadata["invalid_files"] = invalidFiles;
+      history_metadata["first_commit"] = previousVersions[0].date;
+      history_metadata["last_commit"] =
+        previousVersions[previousVersions.length - 1].date;
+      history_metadata["total_commits"] = previousVersions.length;
+      history_metadata["api_titles"] = apiTitles;
+      history_metadata["unique_versions"] = uniqueVersion;
+      history_metadata["age"] = Math.round(
+        (new Date() - new Date(previousVersions[0].date)) /
+          (1000 * 60 * 60 * 24)
+      );
+      history_metadata["git_url"] = remoteUrl;
+
+      return history_metadata;
+    }
+  };
+
+  await nextVersion(0);
+
+  // console.log(history_metadata)
+  const api_commits = JSON.parse(
+    fs.readFileSync(
+      join(
+        repoPath,
+        ".previous_versions",
+        oaspath.split(".")[0],
+        ".api_commits.json"
+      )
+    )
+  );
+  const new_api_commits = api_commits.filter(
+    (commit) =>
+      !history_metadata.invalid_files.map((c) => c.hash).includes(commit.hash)
+  );
+
+  fs.writeFileSync(
+    join(
+      repoPath,
+      ".previous_versions",
+      oaspath.split(".")[0],
+      ".api_commits.json"
+    ),
+    JSON.stringify(new_api_commits)
+  );
+  return history_metadata;
 };
 
 // get all the versions of the oas file
@@ -112,7 +236,7 @@ async function getPreviousVersionsOfFile(repositoryPath, filePath) {
   const log = await git.log(logOptions);
   // console.log(log);
   const commits = log.all[0].hash.split("\n");
-  // console.log(commits);
+
   var hashes = commits.filter((commit, index) => {
     return index % 3 === 0;
   });
@@ -135,5 +259,10 @@ async function getPreviousVersionsOfFile(repositoryPath, filePath) {
       // console.log(err)
     }
   }
+  // sort the previous versions by date
+  previousVersions.sort((a, b) => {
+    return new Date(a.date) - new Date(b.date);
+  });
+
   return previousVersions;
 }

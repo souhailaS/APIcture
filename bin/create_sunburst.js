@@ -20,11 +20,12 @@ async function createSunburst(
   non_breakings,
   content,
   useSemver,
-  versionColors
+  versionColors,
+  isFirst
 ) {
   // month name
 
-  console.log("commit: ", commit.commit_date);
+  // console.log("commit: ", commit.commit_date);
   var month = commit.commit_date.toLocaleString("default", { month: "short" });
   var year = commit.commit_date.getFullYear();
   var day = commit.commit_date.getDate();
@@ -120,20 +121,9 @@ async function createSunburst(
     commit_time = time_data;
   }
 
-  var commit_version = {
-    name: version,
-    children: [],
-    commit_date: commit.commit_date,
-    // value: 1,
-    // item style
-    itemStyle: {
-      color: "#fff",
-      // color: versionColors.filter((d) => d.version == version)[0].color,
-    },
-  };
-
   var backwardsRing = {
     name: version,
+    level: "BACKWARD LEVEL",
     commit_date: commit.commit_date,
     itemStyle: {
       label: {
@@ -147,55 +137,83 @@ async function createSunburst(
   };
   commit_time.children.push(backwardsRing);
 
+  var commit_version = {
+    level: "VERSION LEVEL",
+    name: version,
+    children: [],
+    commit_date: commit.commit_date,
+    // value: 1,
+    // item style
+    itemStyle: {
+      // grey color
+      color: "#fff",
+      // color: versionColors.filter((d) => d.version == version)[0].color,
+    },
+  };
+
+  backwardsRing.children.push(commit_version);
+
   if (semver.valid(version) && semver.valid(previous_version)) {
     if (previous_version) {
       var ver_diff = semver.diff(previous_version, version);
-
-      // console.log(previous_version, "-->", version, ver_diff);
-      // if minore version
-      if (ver_diff == "minor") {
-        commit_version.itemStyle.color = "hsl(56, 91%, 68%)";
-      }
-      if (ver_diff == "preminor") {
-        commit_version.itemStyle.color = `hsl(56, 74%, 84%)`;
-      }
-      // if major version
-      if (ver_diff == "major") {
-        // change color to light red
-        commit_version.itemStyle.color = `hsl(3, 79%, 40%)`;
-      }
-      if (ver_diff == "premajor") {
-        commit_version.itemStyle.color = `hsl(3, 55%, 69%)`;
-      }
-      // if patch version
-      if (ver_diff == "patch") {
-        // change color to  yellow
-        commit_version.itemStyle.color = `hsl(102, 84%, 75%)`;
-      }
-
-      if (ver_diff == "prepatch") {
-        commit_version.itemStyle.color = `hsl(102, 51%, 90%)`;
+      switch (ver_diff) {
+        case "minor":
+          commit_version.itemStyle.color = "hsl(56, 91%, 68%)";
+          break;
+        case "preminor":
+          commit_version.itemStyle.color = `hsl(56, 74%, 84%)`;
+          break;
+        case "major":
+          commit_version.itemStyle.color = `hsl(3, 79%, 40%)`;
+          break;
+        case "premajor":
+          commit_version.itemStyle.color = `hsl(3, 55%, 69%)`;
+          break;
+        case "patch":
+          commit_version.itemStyle.color = `hsl(102, 84%, 75%)`;
+          break;
+        case "prepatch":
+          commit_version.itemStyle.color = `hsl(102, 51%, 90%)`;
+          break;
       }
 
       if (semver.gt(previous_version, version)) {
-        console.log("gt", previous_version, " > ", version);
+        // console.log("gt", previous_version, " > ", version);
         backwardsRing.itemStyle.color = versionColors.filter(
           (d) => d.version == version
         )[0].color;
       }
-
-      // if the versions are equal
-      // if (!ver_diff) {
-      // change color to white
-
-      // }
     }
   }
 
-  backwardsRing.children.push(commit_version);
+  var unclassified = {
+    level: "CHANGES LEVEL",
+    name: "unclassified",
+    itemStyle: {
+      color: "#000",
+    },
+    commit_date: commit.commit_date,
+    label: {
+      show: false,
+    },
+    children: [
+      {
+        name: "unclassified",
+        itemStyle: {
+          color: "#000",
+        },
+        commit_date: commit.commit_date,
+        label: {
+          show: false,
+        },
+        value: 1,
+      },
+    ],
+  };
 
   var breaking = {
     name: "breaking",
+    level: "CHANGES LEVEL",
     itemStyle: {
       color: "#B30000",
     },
@@ -242,11 +260,23 @@ async function createSunburst(
         breaking_change_data.value++;
       }
     });
-
     commit_version.children.push(breaking);
   }
 
+  var meta_data = {
+    level: "METADATA",
+    name: "Meta data changes",
+    itemStyle: {
+      // grey color
+      color: "#C8C8C8",
+    },
+    commit_date: commit.commit_date,
+    children: [],
+    // value: 1,
+  };
+
   var non_breaking = {
+    level: "CHANGES LEVEL",
     name: "non-breaking",
     itemStyle: {
       color: "#90EE90",
@@ -256,57 +286,114 @@ async function createSunburst(
     children: [],
     // value: 1,
   };
+  if (non_breakings) {
+    var non_breaking_changes_arr =
+      non_breakings.find((d) => d.hash == commit.hash) || [];
 
-  var non_breaking_changes_arr = non_breakings.find(
-    (d) => d.hash == commit.hash
-  );
-  if (non_breaking_changes_arr) {
-    // number of non breaking changes
-    // console.log(non_breaking_changes_arr);
-    var non_breaking_changes = Object.values(
-      non_breaking_changes_arr.nonBreakingChanges
-    ).reduce((a, b) => a + b, 0);
-    non_breaking.value = non_breaking_changes;
+    if (non_breaking_changes_arr) {
+      var meta_changes_keys = ["version", "summary", "id", "tags", "desc"];
+      if (non_breaking_changes_arr.nonBreakingChanges) {
+        var meta_changes = Object.entries(
+          non_breaking_changes_arr.nonBreakingChanges
+        )
+          .filter(([key, value]) => value > 0)
+          .filter(
+            (c) => meta_changes_keys.filter((k) => c[0].includes(k)).length > 0
+          );
 
-    // filter the non breaking changes
-    var non_breaking_changes_data = Object.entries(
-      non_breaking_changes_arr.nonBreakingChanges
-    ).filter(([key, value]) => value > 0);
+        if (meta_changes.length > 0) {
+          meta_changes.forEach((meta_change) => {
+            var meta_change = {
+              name: meta_change[0],
+              value: meta_change[1],
+              itemStyle: {
+                color: "#C8C8C8",
+              },
+              breaking: false,
+            };
 
-    non_breaking_changes_data.forEach((diff) => {
-      var non_breaking_change = {
-        name: diff[0]
-          .replaceAll(/-/g, " ")
-          .replaceAll("api", "")
-          .replaceAll("deprecation", "depr")
-          .replaceAll("request", "req")
-          .replaceAll("response", "res")
-          .replaceAll("responses", "res")
-          .replaceAll("parameter", "param")
-          .replaceAll("optional", "opt"),
-        original: diff[0],
+            meta_data.children.push(meta_change);
+          });
+          commit_version.children.push(meta_data);
+        }
 
-        value: diff[1],
-        itemStyle: {
-          color: "#90EE90",
-        },
-        breaking: false,
-      };
-      non_breaking.children.push(non_breaking_change);
-    });
+        // console.log(meta_data)
 
-    if (non_breaking_changes_data.length > 0) {
-      commit_version.children.push(non_breaking);
+        // number of non breaking changes
+        // console.log(non_breaking_changes_arr);
+
+        var non_breaking_changes = Object.values(
+          non_breaking_changes_arr.nonBreakingChanges
+        ).reduce((a, b) => a + b, 0);
+        non_breaking.value = non_breaking_changes;
+
+        // filter the non breaking changes
+        var non_breaking_changes_data = Object.entries(
+          non_breaking_changes_arr.nonBreakingChanges
+        )
+          .filter(([key, value]) => value > 0)
+          .filter(
+            (c) => !meta_changes_keys.filter((k) => c[0].includes(k)).length > 0
+          );
+
+        non_breaking_changes_data.forEach((diff) => {
+          var non_breaking_change = {
+            name: diff[0],
+            // .replaceAll(/-/g, " ")
+            // .replaceAll("api", "")
+            // .replaceAll("deprecation", "depr")
+            // .replaceAll("request", "req")
+            // .replaceAll("response", "res")
+            // .replaceAll("responses", "res")
+            // .replaceAll("parameter", "param")
+            // .replaceAll("optional", "opt"),
+            original: diff[0],
+            value: diff[1],
+            itemStyle: {
+              color: "#90EE90",
+            },
+            breaking: false,
+          };
+
+          non_breaking.children.push(non_breaking_change);
+        });
+
+        total_changes += non_breaking_changes;
+      }
     }
 
-    total_changes += non_breaking_changes;
+    if (non_breaking_changes_data?.length > 0) {
+      commit_version.children.push(non_breaking);
+    }
   }
 
-  // if (total_changes > 0) {
-  commit_version.value = total_changes;
-  // commit_version.name += " (" + total_changes + ")";
-  // console.log(commit_version.name, total_changes);
-  // }
+  if (total_changes > 0) {
+    commit_version.value = total_changes;
+  }
+  if (isFirst) {
+    // purple
+
+    unclassified.children[0].itemStyle.color = "#FF00FF";
+    unclassified.children[0].name = "First Commit";
+    unclassified.children[0].label = {
+      // show: false,
+    };
+    // unclassified.children[0].children = {
+    //   name: "First Commit",
+    //   itemStyle: {
+    //     color: "#FF00FF",
+    //   },
+    //   label: {
+    //     color: "#FF00FF",
+    //   },
+    // };
+    unclassified.itemStyle.color = "#FF00FF";
+    unclassified.name = "First Commit";
+  }
+  if (commit_version.children.length == 0) {
+    commit_version.children.push(unclassified);
+  }
+
   return;
 }
 
@@ -325,8 +412,34 @@ function generateGrayGradient(maxNumber) {
   return gradient;
 }
 
-export async function generateChangesViz(path, format) {
-  path = join(path, ".previous_versions");
+export async function generateChangesViz(
+  path,
+  format,
+  oaspath,
+  output,
+ all
+) {
+  let chartOptions = {
+    tooltip: {
+      trigger: "item",
+      triggerOn: "mousemove",
+      formatter: function (params) {
+        return params.data.name + "  (value: " + params.data.value + ")";
+      },
+    },
+    series: {
+      center: ["50%", "50%"],
+      radius: ["5%", "85%"],
+      type: "sunburst",
+      data: data,
+      sort: undefined,
+      grid: {
+        with: "100%",
+      },
+    },
+  };
+
+  path = join(path, ".previous_versions", oaspath.split(".")[0]);
   var data = [];
   var commits = fs.readFileSync(join(path, ".api_commits.json"));
   commits = JSON.parse(commits);
@@ -407,50 +520,41 @@ export async function generateChangesViz(path, format) {
         content,
         // isSemver,
         false,
-        versionColors
+        versionColors,
+        !i
       );
     } catch (e) {
-      // console.log(e)
+      console.log(e);
+      // console.log("PROBLEM");
     }
     i = i + 1;
     if (i < commits.length) {
       return await nextCommit(commits[i]);
     } else {
-      let chartOptions = {
-        tooltip: {
-          trigger: "item",
-          triggerOn: "mousemove",
-          formatter: function (params) {
-            return params.data.name + "  (value: " + params.data.value + ")";
-          },
-        },
-        series: {
-          center: ["50%", "50%"],
-          radius: ["5%", "85%"],
-          type: "sunburst",
-          data: data,
-          sort: undefined,
-        },
-      };
-
       // console.log(JSON.stringify(data, null, 2));
-      fs.writeFileSync(join(path, ".test-options.json"), JSON.stringify(chartOptions, null, 2));
+      fs.writeFileSync(
+        join(path, ".test-options.json"),
+        JSON.stringify(chartOptions, null, 2)
+      );
       // levelsConfig(isSemver, chartOptions);
       levelsConfig(false, chartOptions);
       fs.writeFileSync(
         join(path, ".sunburst-source.json"),
         JSON.stringify(chartOptions, null, 2)
       );
+      chartOptions.series.data = data;
+      renderSunburst(chartOptions, format, path, oaspath, output, all);
 
-      renderSunburst(chartOptions, format, path);
       return chartOptions;
     }
   };
 
   await nextCommit(commits[i]);
+
+  return chartOptions;
 }
-function renderSunburst(chartOptions, format, path) {
-  if (format == "html" || !format) {
+function renderSunburst(chartOptions, format, path, oaspath, output, all) {
+  if (format == "html" || !format || format == "echarts") {
     chartOptions.series.sort = null;
     chartOptions.toolbox = {
       orient: "horizontal",
@@ -470,9 +574,7 @@ function renderSunburst(chartOptions, format, path) {
       },
     };
 
-    fs.writeFileSync(
-      join(path, ".sunburst.ejs"),
-      `<!DOCTYPE html>
+    var template = `<!DOCTYPE html>
       <html>
       <head>
         <title>API Channges vs. API versioning</title>
@@ -496,48 +598,58 @@ function renderSunburst(chartOptions, format, path) {
                   });
          </script>
       </body>
-      </html>`
-    );
+      </html>`;
+
     // if (format == "html") {
-    var template = fs.readFileSync(
-      join(path, ".sunburst.ejs"),
-      "utf8",
-      (err, template) => {
-        if (err) {
-          console.error("Error reading template:", err);
-          return;
-        }
+    // var template = fs.readFileSync(
+    //   join(path, ".sunburst.ejs"),
+    //   "utf8",
+    //   (err, template) => {
+    //     if (err) {
+    //       console.error("Error reading template:", err);
+    //       return;
+    //     }
+    //   }
+    // );
+    if (!all){
+      var rendered = ejs.render(template, {
+        chartOptions: JSON.parse(JSON.stringify(chartOptions)),
+        format: format,
+      });
+  
+      if (!fs.existsSync(join(path, "..", "apivol-outputs"))) {
+        fs.mkdirSync(join(path, "..", "apivol-outputs"), { recursive: true });
       }
-    );
-
-    var rendered = ejs.render(template, {
-      chartOptions: JSON.parse(JSON.stringify(chartOptions)),
-      format: format,
-    });
-
-    if (!fs.existsSync(join(path, "..", "apivol-outputs"))) {
-      fs.mkdirSync(join(path, "..", "apivol-outputs"), { recursive: true });
+  
+      if (!output) {
+        output = join(
+          path,
+          "..",
+          "apivol-outputs",
+          `versions-clock-${oaspath.split(".")[0]}-api.html`
+        );
+      }
+  
+      
+        fs.writeFileSync(output, rendered, "utf8", (err) => {
+          if (err) {
+            console.error("Error saving output:", err);
+          } else {
+            console.log("Output saved as", { outputPath });
+          }
+        });
+      // console log link to the output html file
+      console.log(
+        chalk.greenBright.underline.bold(
+          "|- Output Visualization saved as: ",
+          output
+        )
+      );
     }
-    fs.writeFileSync(
-      join(path, "..", "apivol-outputs", "sunburst.html"),
-      rendered,
-      "utf8",
-      (err) => {
-        if (err) {
-          console.error("Error saving output:", err);
-        } else {
-          console.log("Output saved as", { outputPath });
-        }
-      }
-    );
-    // console log link to the output html file
-    console.log(
-      chalk.greenBright.underline.bold(
-        "|- Output Visualization saved as: ",
-        join(path, "..", "apivol-outputs", "sunburst.html")
-      )
-    );
-    open(join(path, "..", "apivol-outputs", "sunburst.html"));
+    
+
+    return chartOptions;
+    // open(join(path, "..", "apivol-outputs", "sunburst.html"));
   }
 
   // PNG output
@@ -613,7 +725,10 @@ function levelsConfig(semver, options) {
   if (semver) {
     options.series.levels = [
       // CENTER
-      {},
+      {
+        r0: "0%",
+        r: "3%",
+      },
       // YEAR LEVEL
       {
         r0: "3%",
@@ -679,9 +794,9 @@ function levelsConfig(semver, options) {
         },
         itemStyle: {
           // shadow blur
-          shadowBlur: 1,
+          // shadowBlur: 1,
           // shadow color grey
-          shadowColor: "rgba(0, 0, 0, 0.5)",
+          // shadowColor: "rgba(0, 0, 0, 0.5)",
         },
       },
       // CHANGES LEVEL
@@ -719,97 +834,58 @@ function levelsConfig(semver, options) {
       {
         r0: "3%",
         r: "11%",
-        label: {
-          // bold labels
-          // fontWeight: 'bold'
-          fontSize: 10,
-          minAngle: 10,
-        },
+        label: { fontSize: 10, minAngle: 10 },
+        itemStyle: { borderWidth: 0 },
       },
       {
         r0: "11%",
         r: "18%",
-        label: {
-          // bold labels
-          // fontWeight: 'bold'
-          fontSize: 10,
-          minAngle: 10,
-        },
+        label: { fontSize: 10, minAngle: 10 },
+        itemStyle: { borderWidth: 0 },
       },
       {
-        // reduce rings width
         r0: "18%",
         r: "25%",
-        label: {
-          rotate: "tangential",
-          fontSize: 10,
-          minAngle: 10,
-        },
+        label: { rotate: "tangential", fontSize: 10, minAngle: 10 },
+        itemStyle: { borderWidth: 0 },
       },
       {
-        // reduce rings width
-        r0: "25%",
+        r0: "25.25%",
         r: "34%",
-
-        //label font  size
-        label: {
-          fontSize: 7,
-          minAngle: 10,
-          minAngle: 10,
-        },
+        label: { fontSize: 7, minAngle: 9 },
+        itemStyle: { borderWidth: 0 },
       },
       {
-        r0: "35%",
-        r: "36%",
-        label: {
-          show: false,
-        },
+        r0: "34.5%",
+        r: "35.5%",
+        label: { show: false },
+        itemStyle: { borderWidth: 0 },
       },
       {
-        // reduce rings width
-        r0: "37%",
+        r0: "36%",
         r: "50%",
-        label: {
-          color: "#000000",
-          fontSize: 9,
-          minAngle: 12,
-        },
-        itemStyle: {
-          // shadow blur
-          shadowBlur: 1,
-          // shadow color grey
-          shadowColor: "rgba(0, 0, 0, 0.5)",
-        },
+        label: { color: "#000000", fontSize: 9, minAngle: 5 },
+        itemStyle: { borderWidth: 1 },
       },
       {
         r0: "50%",
         r: "52%",
-        itemStyle: {
-          borderWidth: 1,
-        },
-        label: {
-          show: false,
-          rotate: "tangential",
-          minAngle: 12,
-        },
+        itemStyle: { borderWidth: 1 },
+        label: { show: false, rotate: "tangential", minAngle: 12 },
       },
-
       {
-        r0: "52%",
-        r: "53%",
+        r0: "52.5%",
+        r: "53.5%",
         label: {
           position: "outside",
           padding: 0,
           silent: false,
-          fontSize: 11,
+          fontSize: 10,
           color: "#000000",
-          minAngle: 12,
-          // fontWeight: "bold",
+          minAngle: 2,
         },
-        itemStyle: {
-          borderWidth: 2,
-        },
-      },
+        itemStyle: { borderWidth: 1 },
+      }
     ];
   }
 }

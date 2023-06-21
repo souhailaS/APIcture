@@ -20,21 +20,30 @@ import colors from "ansi-colors";
 
 import yaml_to_json from "js-yaml";
 
-export async function computeDiff(path) {
-  path = join(path, ".previous_versions");
+export async function computeDiff(path, oaspath) {
+  path = join(path, ".previous_versions", oaspath.split(".")[0]);
   var api_commits = fs.readFileSync(join(path, ".api_commits.json"));
+  api_commits = JSON.parse(api_commits);
+  fs.writeFileSync(
+    join(path, ".diffs.json"),
+    JSON.stringify([
+      {
+        hash: api_commits[0].hash,
+        diff: {},
+        commit_date: api_commits[0].commit_date,
+      },
+    ])
+  );
 
-  // sort the commits by date
+  // {
+  //   hash: api_commits[i].hash,
+  //   diff: stdout,
+  //   commit_date: api_commits[i].commit_date,
+  // })
 
-  fs.writeFileSync(join(path, ".diffs.json"), JSON.stringify([]));
   fs.writeFileSync(join(path, ".breaking.json"), JSON.stringify([]));
   fs.writeFileSync(join(path, ".non-breaking.json"), JSON.stringify([]));
 
-  api_commits = JSON.parse(api_commits);
-  var api_commits = api_commits.sort((a, b) => {
-    // ascending order
-    return new Date(a.commit_date) - new Date(b.commit_date);
-  });
   console.log(
     chalk.blue(`|- Found ${api_commits.length} commits changing OAS file`)
   );
@@ -185,6 +194,7 @@ export async function computeDiff(path) {
 
 async function extractNonBreakingChanges(diff) {
   var nonBreakingChanges = {};
+
   if (diff.info) {
     if (diff.info.title) {
       if (diff.info.title.from == "" && diff.info.title.to != "") {
@@ -200,8 +210,12 @@ async function extractNonBreakingChanges(diff) {
     // API DESCRIPTION CHANGE FEATURES
     if (diff.info.description) {
       if (diff.info.description.from == "" && diff.info.description.to != "") {
-        nonBreakingChanges["api description added"]++;
-      } else nonBreakingChanges["api description modified"]++;
+        if (nonBreakingChanges["api description added"]) {
+          nonBreakingChanges["api description added"]++;
+        } else nonBreakingChanges["api description added"] = 1;
+      } else if (nonBreakingChanges["api description modified"]) {
+        nonBreakingChanges["api description modified"]++;
+      } else nonBreakingChanges["api description modified"] = 1;
     }
     // API VERSION CHANGE FEATURES
     if (diff.info.version) {
@@ -230,24 +244,14 @@ async function extractNonBreakingChanges(diff) {
     }
     // API CONTACT CHANGE FEATURES
     if (diff.info.contact) {
-      if (diff.info.contact.delete)
-        if (nonBreakingChanges["api contact deleted"]) {
-          nonBreakingChanges["api contact deleted"]++;
-        } else {
-          nonBreakingChanges["api contact deleted"] = 1;
-        }
-      else if (diff.info.contact.added)
-        if (nonBreakingChanges["api contact added"]) {
-          nonBreakingChanges["api contact added"]++;
-        } else {
-          nonBreakingChanges["api contact added"] = 1;
-        }
-      else if (diff.info.contact.modified)
+      if (diff.info.contact) {
+        // api contact info modified
         if (nonBreakingChanges["api contact modified"]) {
           nonBreakingChanges["api contact modified"]++;
         } else {
           nonBreakingChanges["api contact modified"] = 1;
         }
+      }
     }
     // API LICENSE CHANGE FEATURES
     if (diff.info.license) {
@@ -490,6 +494,15 @@ async function extractNonBreakingChanges(diff) {
                                 }
                               }
                             }
+                            if (p.properties?.added) {
+                              var change = `property added to schema of resp`;
+                              //`property added to schema of response ${key}/${keys}`;
+                              if (!nonBreakingChanges[change]) {
+                                nonBreakingChanges[change] = 1;
+                              } else {
+                                nonBreakingChanges[change]++;
+                              }
+                            }
                           });
                         }
                       }
@@ -681,6 +694,17 @@ async function extractNonBreakingChanges(diff) {
             }
           }
         }
+      }
+    }
+  }
+
+  if (diff.tags) {
+    if (diff.tags.added || diff.tags.deleted) {
+      var change = `API tags modified`;
+      if (!nonBreakingChanges[change]) {
+        nonBreakingChanges[change] = 1;
+      } else {
+        nonBreakingChanges[change]++;
       }
     }
   }

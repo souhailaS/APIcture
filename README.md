@@ -1,4 +1,8 @@
 # APIcture
+
+
+Feedback collection: https://forms.office.com/e/PAXb73Kkes
+
 ## What is APIcture?
 APIcture is a command-line interface (CLI) tool designed to provide visualization support for understanding the evolution of Web APIs. It enables users to generate insightful visualizations that highlight changes, version upgrades, and metrics associated with API development and evolution. The tool is particularly useful for tracking and analyzing the history of OpenAPI specifications stored in a Git repository, but it also supports generating visualizations directly from code repositories without OpenAPI descriptions.
 

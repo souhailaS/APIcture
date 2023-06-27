@@ -7,10 +7,11 @@ import {
 } from "./versions_parser/regex.js";
 import { detectChanges } from "./versions_parser/upgrades_detector.js";
 
-export async function computeOverallGrowthMetrics(path) {
+export async function computeOverallGrowthMetrics(path, oaspath) {
   var diffs = [];
   var versions = [];
-  path = join(path, ".previous_versions");
+  path = join(path, ".previous_versions", oaspath.split(".")[0]);
+  // path = join(path, ".previous_versions");
   fs.writeFileSync(join(path, ".metrics.json"), "[]");
   var hashes = fs.readFileSync(join(path, ".api_commits.json"));
   var oasPaths = JSON.parse(hashes);
@@ -95,7 +96,29 @@ export async function computeOverallGrowthMetrics(path) {
 
           diffs.push(diff);
         } catch (e) {
-          console.log(e);
+          if (i < oasPaths.length - 1) {
+            i++;
+            console.log(e);
+            var nextCommit = await SwaggerParser.parse(
+              join(
+                path,
+                oasPaths[i + 1].hash + "." + oasPaths[i + 1].fileExtension
+              )
+            );
+            var nextCommit = nextCommit.paths
+              ? Object.keys(nextCommit.paths).reduce((a, b) => {
+                  return nextCommit.paths[b]
+                    ? a + Object.keys(nextCommit.paths[b]).length
+                    : a;
+                }, 0)
+              : 0;
+
+            // console.log("nextCommit", nextCommit);
+
+            var diff = nextCommit - thisCommit;
+
+            diffs.push(diff);
+          }
         }
       }
       if (i < oasPaths.length - 2) {
@@ -172,9 +195,29 @@ export async function computeOverallGrowthMetrics(path) {
       }
     } catch (e) {
       var err = new Error(`
-      Could not parse OAS file of commit ${currentHash}`)
+      Could not parse OAS file of commit ${currentHash}`);
       err.name = "OASParserError";
       console.log(err);
+      i++;
+      if (i < oasPaths.length - 2) return await next(i);
+      else {
+        return {
+          changes_types: {
+            breaking: 0,
+            non_breaking: 0,
+          },
+          gms: false,
+          smg: false,
+
+          growth: 0,
+          shrink: 0,
+          stable: 0,
+          shrinkCommits: 0,
+          growthCommits: 0,
+          stableCommits: 0,
+          versions_changes: [],
+        };
+      }
     }
   };
 

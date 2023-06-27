@@ -5,7 +5,6 @@ import chalk from "chalk";
 import cliProgress from "cli-progress";
 import colors from "ansi-colors";
 
-
 const http_methods = [
   "get",
   "put",
@@ -17,26 +16,27 @@ const http_methods = [
   "trace",
 ];
 
-export async function computeSizeMetrics(path) {
-  path = join(path, ".previous_versions");
+export async function computeSizeMetrics(path, oaspath) {
+  var metrics = []
+  path = join(path, ".previous_versions", oaspath.split(".")[0]);
   fs.writeFileSync(join(path, ".metrics.json"), "[]");
   var hashes = fs.readFileSync(join(path, ".api_commits.json"));
   var oasPaths = JSON.parse(hashes); //.map((h) => h.hash + "." + h.fileExtension);
 
-    // var bar = new cliProgress.SingleBar(
-    //     {
-    //         format: "|- Computing size metrics |" + colors.cyan("{bar}") + "| {percentage}% || {value}/{total} Chunks",
-    //         barCompleteChar: "\u2588",
-    //         barIncompleteChar: "\u2591",
-    //         hideCursor: true,
-    //     },
-    //     cliProgress.Presets.rect
-    // );
-    // bar.start(oasPaths.length-1, 0);
+  // var bar = new cliProgress.SingleBar(
+  //     {
+  //         format: "|- Computing size metrics |" + colors.cyan("{bar}") + "| {percentage}% || {value}/{total} Chunks",
+  //         barCompleteChar: "\u2588",
+  //         barIncompleteChar: "\u2591",
+  //         hideCursor: true,
+  //     },
+  //     cliProgress.Presets.rect
+  // );
+  // bar.start(oasPaths.length-1, 0);
 
   var next = async (l) => {
     if (l < oasPaths.length) {
-        // bar.update(l);
+      // bar.update(l);
       var api = await SwaggerParser.parse(
         join(path, oasPaths[l].hash + "." + oasPaths[l].fileExtension)
       );
@@ -74,7 +74,6 @@ export async function computeSizeMetrics(path) {
             }, [])
           : [];
 
-   
         var structureSize = {
           paths: Object.values(api.paths).length,
           operations: endpoints.length,
@@ -273,7 +272,7 @@ export async function computeSizeMetrics(path) {
         };
 
         var metrics_file = fs.readFileSync(join(path, ".metrics.json"), "utf8");
-        var metrics = JSON.parse(metrics_file);
+        metrics = JSON.parse(metrics_file);
         metrics.push({
           hash: oasPaths[l].hash,
           commit_date: oasPaths[l].commit_date,
@@ -294,13 +293,12 @@ export async function computeSizeMetrics(path) {
         // // exit code 0
         // process.exit(0);
         // // console.log("Done");
-        return ;
+        return;
       }
     }
   };
 
-   await next(0);
-   return JSON.parse(fs.readFileSync(join(path, ".metrics.json"), "utf8"));
-
+  await next(0);
+  console.log(metrics);
+  return metrics//JSON.parse(fs.readFileSync(join(path, ".metrics.json"), "utf8"));
 }
-

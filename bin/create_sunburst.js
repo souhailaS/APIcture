@@ -10,6 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import chalk from "chalk";
 import open from "open";
+import dayjs from "dayjs";
 
 async function createSunburst(
   commit,
@@ -99,7 +100,7 @@ async function createSunburst(
   var second = commit.commit_date.getSeconds();
   var version = content.info.version;
   var commit_time = {
-    name: hour + ":" + minute + ":" + second,
+    name: dayjs(commit.commit_date).format("HH:mm:ss"),
     children: [],
     day: day,
     commit_date: commit.commit_date,
@@ -170,7 +171,7 @@ async function createSunburst(
           commit_version.itemStyle.color = `hsl(3, 55%, 69%)`;
           break;
         case "patch":
-          commit_version.itemStyle.color = `hsl(102, 84%, 75%)`;
+          commit_version.itemStyle.color = "#90EE90";
           break;
         case "prepatch":
           commit_version.itemStyle.color = `hsl(102, 51%, 90%)`;
@@ -373,7 +374,7 @@ async function createSunburst(
   if (isFirst) {
     // purple
 
-    unclassified.children[0].itemStyle.color = "#FF00FF";
+    unclassified.children[0].itemStyle.color = "#FFF";
     unclassified.children[0].name = "First Commit";
     unclassified.children[0].label = {
       // show: false,
@@ -387,7 +388,7 @@ async function createSunburst(
     //     color: "#FF00FF",
     //   },
     // };
-    unclassified.itemStyle.color = "#FF00FF";
+    unclassified.itemStyle.color = "#FFF";
     unclassified.name = "First Commit";
   }
   if (commit_version.children.length == 0) {
@@ -412,13 +413,7 @@ function generateGrayGradient(maxNumber) {
   return gradient;
 }
 
-export async function generateChangesViz(
-  path,
-  format,
-  oaspath,
-  output,
- all
-) {
+export async function generateChangesViz(path, format, oaspath, output, all, history) {
   let chartOptions = {
     tooltip: {
       trigger: "item",
@@ -543,7 +538,7 @@ export async function generateChangesViz(
         JSON.stringify(chartOptions, null, 2)
       );
       chartOptions.series.data = data;
-      renderSunburst(chartOptions, format, path, oaspath, output, all);
+      renderSunburst(chartOptions, format, path, oaspath, output, all, history);
 
       return chartOptions;
     }
@@ -553,7 +548,7 @@ export async function generateChangesViz(
 
   return chartOptions;
 }
-function renderSunburst(chartOptions, format, path, oaspath, output, all) {
+function renderSunburst(chartOptions, format, path, oaspath, output, all, history) {
   if (format == "html" || !format || format == "echarts") {
     chartOptions.series.sort = null;
     chartOptions.toolbox = {
@@ -611,16 +606,16 @@ function renderSunburst(chartOptions, format, path, oaspath, output, all) {
     //     }
     //   }
     // );
-    if (!all){
+    if (!all) {
       var rendered = ejs.render(template, {
         chartOptions: JSON.parse(JSON.stringify(chartOptions)),
         format: format,
       });
-  
+
       if (!fs.existsSync(join(path, "..", "apivol-outputs"))) {
         fs.mkdirSync(join(path, "..", "apivol-outputs"), { recursive: true });
       }
-  
+
       if (!output) {
         output = join(
           path,
@@ -629,15 +624,14 @@ function renderSunburst(chartOptions, format, path, oaspath, output, all) {
           `versions-clock-${oaspath.split(".")[0]}-api.html`
         );
       }
-  
-      
-        fs.writeFileSync(output, rendered, "utf8", (err) => {
-          if (err) {
-            console.error("Error saving output:", err);
-          } else {
-            console.log("Output saved as", { outputPath });
-          }
-        });
+
+      fs.writeFileSync(output, rendered, "utf8", (err) => {
+        if (err) {
+          console.error("Error saving output:", err);
+        } else {
+          console.log("Output saved as", { outputPath });
+        }
+      });
       // console log link to the output html file
       console.log(
         chalk.greenBright.underline.bold(
@@ -645,8 +639,55 @@ function renderSunburst(chartOptions, format, path, oaspath, output, all) {
           output
         )
       );
+
+      var now = new Date();
+      const chart = echarts.init(null, null, {
+        renderer: "svg", // must use SVG rendering mode
+        ssr: true, // enable SSR
+        width: 500, // need to specify height and width
+        height: 500,
+      });
+      levelsConfig(true, chartOptions);
+      chart.setOption(chartOptions);
+      // if not exist fs.mkdirSync(join(path, "..","..", "apivol-outputs"));
+      // if(!fs.mkdirSync(join(path, "..","..", "apivol-outputs"))){
+      //   fs.mkdirSync(join(path, "..","..", "apivol-outputs"))
+      // }
+      const svgStr = chart.renderToSVGString();
+  
+      if (!fs.existsSync(join(path, "..", "..", "apivol-outputs"))) {
+        fs.mkdirSync(join(path, "..", "..", "apivol-outputs"), {
+          recursive: true,
+        });
+      }
+  
+      fs.writeFileSync(
+        join(
+          path,
+          "..",
+          "..",
+          "apivol-outputs",
+        `versions-${history.api_titles[0].title}` + ".svg"
+        ),
+        svgStr,
+        "utf8",
+        (err) => {
+          if (err) {
+            console.error("Error saving output:", err);
+          } else {
+            console.log("Output saved as", { outputPath });
+          }
+        }
+      );
+      console.log(
+        chalk.greenBright.underline.bold(
+          "|- Output Visualization saved as: " +
+            join(path, "..", "apivol-outputs", "sunburst.svg")
+        )
+      );
     }
-    
+
+   
 
     return chartOptions;
     // open(join(path, "..", "apivol-outputs", "sunburst.html"));
@@ -694,9 +735,13 @@ function renderSunburst(chartOptions, format, path, oaspath, output, all) {
     });
 
     chart.setOption(chartOptions);
+    // if not exist fs.mkdirSync(join(path, "..","..", "apivol-outputs"));
+    // if(!fs.mkdirSync(join(path, "..","..", "apivol-outputs"))){
+    //   fs.mkdirSync(join(path, "..","..", "apivol-outputs"))
+    // }
     const svgStr = chart.renderToSVGString();
     fs.writeFileSync(
-      join(path, "..", "apivol-outputs", "sunburst.svg"),
+      join(path, "..", "..", "apivol-outputs", "sunburst.svg"),
       svgStr,
       "utf8",
       (err) => {
@@ -721,111 +766,66 @@ function renderSunburst(chartOptions, format, path, oaspath, output, all) {
   return;
 }
 
-function levelsConfig(semver, options) {
-  if (semver) {
+function levelsConfig(svg, options) {
+  if (svg) {
+    delete options.toolbox;
+    // remove tool
     options.series.levels = [
-      // CENTER
-      {
-        r0: "0%",
-        r: "3%",
-      },
-      // YEAR LEVEL
+      {},
       {
         r0: "3%",
         r: "11%",
-        label: {
-          // bold labels
-          // fontWeight: 'bold'
-          fontSize: 10,
-          minAngle: 10,
-        },
+        label: { fontSize: 7, minAngle: 10 },
+        itemStyle: { borderWidth: 0 },
       },
-      // MONTH LEVEL
       {
         r0: "11%",
         r: "18%",
-        label: {
-          // bold labels
-          // fontWeight: 'bold'
-          fontSize: 10,
-          minAngle: 10,
-        },
+        label: { fontSize: 7, minAngle: 10 },
+        itemStyle: { borderWidth: 0 },
       },
-      // DAY LEVEL
       {
-        // reduce rings width
         r0: "18%",
         r: "25%",
-        label: {
-          rotate: "tangential",
-          fontSize: 10,
-          minAngle: 10,
-        },
+        label: { rotate: "tangential", fontSize: 7, minAngle: 10 },
+        itemStyle: { borderWidth: 0 },
       },
-      // TIMESTAMP LEVEL
       {
-        // reduce rings width
-        r0: "25%",
-        r: "34%",
-
-        //label font  size
-        label: {
-          fontSize: 7,
-          minAngle: 10,
-        },
+        r0: "25.25%",
+        r: "38%",
+        label: { fontSize: 7, minAngle: 9 },
+        itemStyle: { borderWidth: 0 },
       },
-      // semver ring
       {
-        r0: "34%",
-        r: "36%",
-        label: {
-          show: false,
-          rotate: "tangential",
-        },
+        r0: "38.5%",
+        r: "39.5%",
+        label: { show: false },
+        itemStyle: { borderWidth: 0 },
       },
-      // VERSION LEVEL
       {
-        // reduce rings width
-        r0: "36%",
-        r: "44%",
-        label: {
-          color: "#000000",
-          fontSize: 9,
-        },
-        itemStyle: {
-          // shadow blur
-          // shadowBlur: 1,
-          // shadow color grey
-          // shadowColor: "rgba(0, 0, 0, 0.5)",
-        },
+        r0: "40%",
+        r: "54%",
+        label: { color: "#000000", fontSize: 9, minAngle: 5 },
+        itemStyle: { borderWidth: 1 },
       },
-      // CHANGES LEVEL
       {
-        r0: "44%",
-        r: "46%",
-        itemStyle: {
-          borderWidth: 1,
-        },
-        label: {
-          show: false,
-          rotate: "tangential",
-        },
+        r0: "54%",
+        r: "56%",
+        itemStyle: { borderWidth: 1 },
+        label: { show: false, rotate: "tangential", minAngle: 12 },
       },
-      // BREAKING / NON BREAKING LEVEL
       {
-        r0: "46%",
-        r: "47%",
+        r0: "56.5%",
+        r: "57.5%",
         label: {
           position: "outside",
           padding: 0,
           silent: false,
-          fontSize: 11,
+          fontSize: 10,
           color: "#000000",
-          // fontWeight: "bold",
+          minAngle: 2,
         },
-        itemStyle: {
-          borderWidth: 2,
-        },
+        itemStyle: { borderWidth: 1 },
       },
     ];
   } else {
@@ -885,7 +885,7 @@ function levelsConfig(semver, options) {
           minAngle: 2,
         },
         itemStyle: { borderWidth: 1 },
-      }
+      },
     ];
   }
 }

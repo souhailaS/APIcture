@@ -6,6 +6,7 @@ import fs from "fs";
 import echarts from "echarts";
 import ejs from "ejs";
 import open from "open";
+import dayjs from "dayjs";
 
 let MAP_MAX = 30000;
 let MAP_STEPS = 50;
@@ -161,7 +162,6 @@ function convert(o, f, data) {
       show: false,
     };
   } else {
-    
     if (!o.itemStyle)
       o.itemStyle = {
         color: "#000", // pick_color(grays, o["value"], data),
@@ -244,19 +244,30 @@ function convert(o, f, data) {
     o.name = "OPT";
   }
 
-  if (o.name == "description") {
-    o.name = "desc";
-    o.itemStyle = {
-      // grey color
-      color: "#C8C8C8",
-    };
-  }
+  // if (o.name == "description") {
+  //   o.name = "desc";
+  //   o.itemStyle = {
+  //     // grey color
+  //     color: "#C8C8C8",
+  //   };
+  // }
 
-  if (o.name == "info") {
-    o.itemStyle = {
-      color: "#C8C8C8",
-    };
-  }
+  // if (o.name == "info") {
+  //   o.itemStyle = {
+  //     color: "#C8C8C8",
+  //   };
+  // }
+
+  // if (o.name == "license") {
+  //   o.itemStyle = {
+  //     color: "#C8C8C8",
+  //   };
+  // }
+  // if (o.name == "url") {
+  //   o.itemStyle = {
+  //     color: "#C8C8C8",
+  //   };
+  // }
 
   if (o.name == "parameters") {
     o.name = "params";
@@ -274,12 +285,14 @@ export function createTree(data, f) {
     (e) =>
       e["name"] != "e" &&
       e["name"] != "openAPI" &&
-      e["name"] != "tags" &&
+      // e["name"] != "tags" &&
       e["name"] != "externalDocs" &&
       e["name"] != "endpoints" &&
       e["name"] != "components"
   );
 
+
+  console.log(data)
   // console.log(data);
 
   data = data.map((e) => convert(e, f, data));
@@ -323,11 +336,56 @@ export function createTree(data, f) {
   return option;
 }
 
-export async function renderTree(path, f, format, aggr, oaspath,output) {
-  path = join(path, ".previous_versions", oaspath.split(".")[0] );
+export async function renderTree(path, f, format, aggr, oaspath, output, all, history) {
+  path = join(path, ".previous_versions", oaspath.split(".")[0]);
   var diffs = fs.readFileSync(join(path, ".diffs.json"), "utf8");
   diffs = JSON.parse(diffs);
   var changes_frequency = computeFieldFrequency(diffs, path, aggr);
+
+  delete changes_frequency.children.filter((e) => e.name == "info")[0].value
+
+  // if (info) {
+  //   if (info.children.length == 0) {
+  //     // remove info
+  //     changes_frequency.children = changes_frequency.children.filter(
+  //       (e) => !e.name == "info"
+  //     );
+  //   }
+  // }
+
+
+
+
+
+  delete changes_frequency.children.filter((e) => e.name == "tags")[0].value
+
+  delete changes_frequency.children.filter((e) => e.name == "paths")[0].value
+  console.log(changes_frequency.children);
+  // dele
+  // if (tags) {
+  //   if (tags.children.length == 0) {
+  //    console.log("remove tags")
+  //     // changes_frequency.children = changes_frequency.children.filter(
+  //     //   (e) => !e.name == "tags"
+  //     // );
+  //   }
+  // }
+
+  // console.log(changes_frequency.children);
+
+  // var paths = changes_frequency.children.filter((e) =>
+  //   e.name == "paths"
+  // )[0]
+
+  // if (paths) {
+  //   if (paths.children.length == 0) {
+  //     // remove info
+  //     changes_frequency.children = changes_frequency.children.filter((e) =>
+  //       !e.name == "paths"
+  //     );
+  //   }
+  // }
+
   fs.writeFileSync(
     join(path, ".changes_frequency.json"),
     JSON.stringify(changes_frequency)
@@ -421,6 +479,46 @@ export async function renderTree(path, f, format, aggr, oaspath,output) {
         join(path, "..", "apivol-outputs", "changes-visualization.html")
       )
     );
+
+if(!all){
+  delete chartOptions.toolbox 
+  var now = new Date();
+  const chart = echarts.init(null, null, {
+    renderer: "svg", // must use SVG rendering mode
+    ssr: true, // enable SSR
+    width: 500, // need to specify height and width
+    height: 500,
+  });
+
+  chart.setOption(chartOptions);
+  // if not exist fs.mkdirSync(join(path, "..","..", "apivol-outputs"));
+  // if(!fs.mkdirSync(join(path, "..","..", "apivol-outputs"))){
+  //   fs.mkdirSync(join(path, "..","..", "apivol-outputs"))
+  // }
+  const svgStr = chart.renderToSVGString();
+  if(!fs.existsSync(join(path, "..", "..", "apivol-outputs"))){
+    fs.mkdirSync(join(path, "..", "..", "apivol-outputs"), { recursive: true });
+  }
+  fs.writeFileSync(
+    join(path, "..", "..", "apivol-outputs",`changes-${history.api_titles[0].title}` + ".svg"),
+    svgStr,
+    "utf8",
+    (err) => {
+      if (err) {
+        console.error("Error saving output:", err);
+      } else {
+        console.log("Output saved as", { outputPath });
+      }
+    }
+  );
+  console.log(
+    chalk.greenBright.underline.bold(
+      "|- Output Visualization saved as: " +
+        join(path, "..", "apivol-outputs", "sunburst.svg")
+    )
+  );
+}
+   
     // open(join(path, "..", "apivol-outputs", "changes-visualization.html"));
     return chartOptions;
   }
@@ -454,6 +552,7 @@ export async function renderTree(path, f, format, aggr, oaspath,output) {
       )
     );
 
+    
     // open(join(path, "..", "apivol-outputs", "changes-visualization.png"));
   }
 
@@ -469,7 +568,7 @@ export async function renderTree(path, f, format, aggr, oaspath,output) {
     chart.setOption(chartOptions);
     const svgStr = chart.renderToSVGString();
     fs.writeFileSync(
-      join(path, "..", "apivol-outputs", "changes-visualization.svg"),
+      join(path, "..", "", "apivol-outputs", "changes-visualization.svg"),
       svgStr,
       "utf8",
       (err) => {
@@ -483,7 +582,7 @@ export async function renderTree(path, f, format, aggr, oaspath,output) {
     console.log(
       chalk.greenBright.underline.bold(
         "|- Output Visualization saved as: " +
-          join(path, "..", "apivol-outputs", "changes-visualization.svg")
+          join(path, "..", "", "apivol-outputs", "changes-visualization.svg")
       )
     );
     // exit process

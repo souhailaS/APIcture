@@ -42,6 +42,7 @@ build/Release
 node_modules/
 jspm_packages/
 test_repos/
+test_repos_2/
 
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
@@ -136,3 +137,7 @@ todos.md
 bin/test/repos
 
 note.md
+
+.env
+
+local/

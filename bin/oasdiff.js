@@ -21,6 +21,7 @@ import colors from "ansi-colors";
 import yaml_to_json from "js-yaml";
 
 export async function computeDiff(path, oaspath) {
+
   path = join(path, ".previous_versions", oaspath.split(".")[0]);
   var api_commits = fs.readFileSync(join(path, ".api_commits.json"));
   api_commits = JSON.parse(api_commits);

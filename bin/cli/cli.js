@@ -29,11 +29,15 @@ import { computeOverallGrowthMetrics } from "../overall_metrics.js";
 import { renderReport } from "../render_report.js";
 import { renderAllCharts } from "../render_all_viz.js";
 import chalk from "chalk";
+import { join } from "path";
 
-// program.name("apict").description("CLI").version("0.0.1");
 
+
+/**
+ * Generate the versions clock view.
+ */
 program
-  .command("versioning")
+  .command("clock")
   .description("Generate API Changes vs API Versioning Sunburst Visualization")
   .option(
     "-r, --repo <path>",
@@ -43,11 +47,13 @@ program
   .option("-f, --format <format>", "Output format")
   .option("-fs, --fast", "Fast mode")
   .option("-a, --all", "Generate OAS for all OAS files found in the repo")
+
   .action(async (options) => {
     message();
+
     const repoPath = options.repo || process.cwd();
     const outputDir = options.output || process.cwd();
-    const format = options.format || "html";
+    const format = options.format;
     const filename = options.filename || "evolution-visualization";
     try {
       var oasFiles = [];
@@ -59,9 +65,7 @@ program
             repoPath,
             oasFiles[i].oaspath
           );
-          console.log(history_metadata);
           await computeDiff(repoPath, oasFiles[i].oaspath);
-
           await generateChangesViz(
             repoPath,
             format,
@@ -106,11 +110,42 @@ program
   .action(async (options) => {
     message();
     const repoPath = options.repo || process.cwd();
+    var aggregate = options.details ? false : true;
+    var format = options.format || "html";
+
     try {
-      await fetchHistory(repoPath);
-      await computeDiff(repoPath);
-      var aggregate = options.details ? false : true;
-      await renderTree(repoPath, options.frequency, options.format, aggregate);
+      var oasFiles = [];
+      if (!options.fast) {
+        oasFiles = await fetchOASFiles(repoPath, options.all);
+
+        var nextFile = async (i) => {
+          var history_metadata = await fetchHistory(
+            repoPath,
+            oasFiles[i].oaspath
+          );
+
+          await computeDiff(repoPath, oasFiles[i].oaspath);
+          await renderTree(
+            repoPath,
+            options.frequency,
+            format,
+            aggregate,
+            oasFiles[i].oaspath
+          );
+          console.log(
+            `|- Rendering sunburst chart in [] format for ${oasFiles[i].oaspath}`
+          );
+          i++;
+          if (i < oasFiles.length) {
+            nextFile(i);
+          } else {
+            return true;
+          }
+        };
+        await nextFile(0);
+      }
+
+      //
     } catch (err) {
       console.log(err);
     }
@@ -182,11 +217,11 @@ program
 
 function message() {
   console.log();
-  console.log(
-    chalk.bold.yellow(
-      "  _______  _______  _______  _______  _______  _______  "
-    )
-  );
+  // console.log(
+  //   chalk.bold.yellow(
+  //     "  _______  _______  _______  _______  _______  _______  "
+  //   )
+  // );
   console.log();
   console.log(
     " " +
@@ -197,6 +232,7 @@ function message() {
       chalk.bold.red("t") +
       chalk.bold.cyan("u") +
       chalk.bold.yellow("r") +
+      chalk.bold.magenta("e") +
       " :  A CLI tool to visually depict API evolution"
   );
   console.log(
@@ -235,17 +271,19 @@ program
             repoPath,
             oasFiles[i].oaspath
           );
-          // console.log(history_metadata);
-          // console.log(history_metadata);
-          if (history_metadata.total_commits > 10) {
-           await computeDiff(repoPath, oasFiles[i].oaspath);
 
+          if (history_metadata?.total_commits > 10) {
+            console.log(history_metadata);
+            // console.log(history_metadata);
+            await computeDiff(repoPath, oasFiles[i].oaspath);
+            //chartOptions, format, path, oaspath, output, all, history
             var versionsEchart = await generateChangesViz(
               repoPath,
               "echarts",
               oasFiles[i].oaspath,
               options.output,
-              options.all
+              options.all,
+              history_metadata
             );
 
             var changesEcharts = await renderTree(
@@ -255,6 +293,7 @@ program
               false,
               oasFiles[i].oaspath,
               options.output,
+              false,
               history_metadata
             );
 
@@ -263,10 +302,27 @@ program
               versionsEchart,
               output: outputDir,
               filename: oasFiles[i].oaspath.split(".")[0],
-              history_metadata
+              history_metadata,
             };
 
             renderAllCharts(to_render);
+
+            var metrics = await computeSizeMetrics(
+              join(
+                repoPath,
+                ".previous_versions",
+                oasFiles[i].oaspath.split(".")[0]
+              )
+            );
+            const overrAll = await computeOverallGrowthMetrics(
+              join(
+                repoPath,
+                ".previous_versions",
+                oasFiles[i].oaspath.split(".")[0]
+              ),
+              metrics
+            );
+            renderReport(overrAll);
 
             console.log(
               `|- Rendering all charts in [html] format for ${oasFiles[i].oaspath}`

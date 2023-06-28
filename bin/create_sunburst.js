@@ -642,6 +642,7 @@ function renderSunburst(
     filename = `version-clock-${oaspath.split(".")[0].replace(" ", "-")}`;
     output = join(path, filename);
   } else {
+    filename = `versions-${filename.replace(" ", "-")}`;
     output = join(path, filename);
   }
 
@@ -685,7 +686,7 @@ function renderSunburst(
           height: 100vh; 
         }
         .views-item {
-          height: 600px;
+          height: 800px;
           box-shadow: #bfc4c6 0px 0px 4px;
         }
         .versions {
@@ -830,12 +831,8 @@ function renderSunburst(
         console.log("Output saved as", { output });
       }
     });
-    console.log(
-      chalk.greenBright.underline.bold(
-        "|- Output Visualization saved as: " +
-          join(path, "..", "apicture", "sunburst.png")
-      )
-    );
+
+    return chartOptions;
   }
 
   return;

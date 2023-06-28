@@ -130,216 +130,26 @@ const HTML = `<!DOCTYPE html>
 </html>
 `;
 
-export function renderAllCharts(input, history_metadata) {
-  // console.log(input);
+export function renderAllCharts(input) {
   var rendered = ejs.render(HTML, {
     changesEcharts: JSON.parse(JSON.stringify(input.changesEcharts)),
     versionsEcharts: JSON.parse(JSON.stringify(input.versionsEchart)),
     history_metadata: input.history_metadata,
   });
   var output = input.output;
-  console.log(output);
+  var path = input.path;
   if (!output) {
-    output = join(
-      process.cwd(),
-      "apivol-outputs",
-      `viz-${input.filename}-api.html`
-    );
+    path = join(path, "APIcture", input.oaspath);
   } else {
-    output = join(output);
+    path = join(output, input.oaspath);
+  }
+  if (!fs.existsSync(path)) {
+    fs.mkdirSync(path, { recursive: true });
   }
 
-  // if join(process.cwd(), "apivol-outputs") not exists, create it
-  if (!fs.existsSync(join(process.cwd(), "apivol-outputs"))) {
-    fs.mkdirSync(join(process.cwd(), "apivol-outputs"));
-  }
-  try {
-    fs.writeFileSync(output, rendered);
+  output = join(path, `viz-${input.filename}.html`);
 
-    // reder echarts as svg
-    const chartChanges = echarts.init(null, null, {
-      renderer: "svg", // must use SVG rendering mode
-      ssr: true, // enable SSR
-      width: 500, // need to specify height and width
-      height: 500,
-    });
-    // levelsConfig(true, input.changesEcharts);
-    chartChanges.setOption(input.changesEcharts);
-    // ${oasFiles[i].oaspath.split(".")[0]}-${
-    //   history_metadata.api_titles[0].title
-    // }
-    const svgStr = chartChanges.renderToSVGString();
-    var dir = output.split("/").slice(0, -1);
-    fs.writeFileSync(
-      join(
-        dir.join("/"),
-        `viz-${input.filename}-${history_metadata.api_titles[0].title}-changes.svg`
-      ),
-      svgStr,
-      "utf8",
-      (err) => {
-        if (err) {
-          console.error("Error saving output:", err);
-        } else {
-          console.log("Output saved as", { outputPath });
-        }
-      }
-    );
-
-    const chartVersions = echarts.init(null, null, {
-      renderer: "svg", // must use SVG rendering mode
-      ssr: true, // enable SSR
-      width: 500, // need to specify height and width
-      height: 500,
-    });
-    levelsConfig(true, input.versionsEchart);
-    chartVersions.setOption(input.versionsEchart);
-
-    const svgStr2 = chartVersions.renderToSVGString();
-
-    console.log(output);
-    fs.writeFileSync(
-      // remove last
-
-      join(
-        dir.join("/"),
-        `viz-${input.filename}-${history_metadata.api_titles[0].title}-versions.svg`
-      ),
-      svgStr2,
-      "utf8",
-      (err) => {
-        if (err) {
-          console.error("Error saving output:", err);
-        } else {
-          console.log("Output saved as", { outputPath });
-        }
-      }
-    );
-  } catch (err) {
-    console.log(err);
-  }
-}
-
-function levelsConfig(svg, options) {
-  if (svg) {
-    delete options.toolbox;
-    // remove tool
-    options.series.levels = [
-      {},
-      {
-        r0: "3%",
-        r: "11%",
-        label: { fontSize: 7, minAngle: 10 },
-        itemStyle: { borderWidth: 0 },
-      },
-      {
-        r0: "11%",
-        r: "18%",
-        label: { fontSize: 7, minAngle: 10 },
-        itemStyle: { borderWidth: 0 },
-      },
-      {
-        r0: "18%",
-        r: "25%",
-        label: { rotate: "tangential", fontSize: 7, minAngle: 10 },
-        itemStyle: { borderWidth: 0 },
-      },
-      {
-        r0: "25.25%",
-        r: "38%",
-        label: { fontSize: 7, minAngle: 9 },
-        itemStyle: { borderWidth: 0 },
-      },
-      {
-        r0: "38.5%",
-        r: "39.5%",
-        label: { show: false },
-        itemStyle: { borderWidth: 0 },
-      },
-      {
-        r0: "40%",
-        r: "54%",
-        label: { color: "#000000", fontSize: 9, minAngle: 5 },
-        itemStyle: { borderWidth: 1 },
-      },
-      {
-        r0: "54%",
-        r: "56%",
-        itemStyle: { borderWidth: 1 },
-        label: { show: false, rotate: "tangential", minAngle: 12 },
-      },
-      {
-        r0: "56.5%",
-        r: "57.5%",
-        label: {
-          position: "outside",
-          padding: 0,
-          silent: false,
-          fontSize: 10,
-          color: "#000000",
-          minAngle: 2,
-        },
-        itemStyle: { borderWidth: 1 },
-      },
-    ];
-  } else {
-    options.series.levels = [
-      {},
-      {
-        r0: "3%",
-        r: "11%",
-        label: { fontSize: 10, minAngle: 10 },
-        itemStyle: { borderWidth: 0 },
-      },
-      {
-        r0: "11%",
-        r: "18%",
-        label: { fontSize: 10, minAngle: 10 },
-        itemStyle: { borderWidth: 0 },
-      },
-      {
-        r0: "18%",
-        r: "25%",
-        label: { rotate: "tangential", fontSize: 10, minAngle: 10 },
-        itemStyle: { borderWidth: 0 },
-      },
-      {
-        r0: "25.25%",
-        r: "34%",
-        label: { fontSize: 7, minAngle: 9 },
-        itemStyle: { borderWidth: 0 },
-      },
-      {
-        r0: "34.5%",
-        r: "35.5%",
-        label: { show: false },
-        itemStyle: { borderWidth: 0 },
-      },
-      {
-        r0: "36%",
-        r: "50%",
-        label: { color: "#000000", fontSize: 9, minAngle: 5 },
-        itemStyle: { borderWidth: 1 },
-      },
-      {
-        r0: "50%",
-        r: "52%",
-        itemStyle: { borderWidth: 1 },
-        label: { show: false, rotate: "tangential", minAngle: 12 },
-      },
-      {
-        r0: "52.5%",
-        r: "53.5%",
-        label: {
-          position: "outside",
-          padding: 0,
-          silent: false,
-          fontSize: 10,
-          color: "#000000",
-          minAngle: 2,
-        },
-        itemStyle: { borderWidth: 1 },
-      },
-    ];
-  }
+  fs.writeFileSync(output, rendered, "utf-8", (err) => {
+    if (err) throw err;
+  });
 }

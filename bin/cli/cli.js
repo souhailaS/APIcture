@@ -257,7 +257,10 @@ program
   .option("-a, --all", "Generate OAS for all OAS files found in the repo")
   .option("-d, --details", "Show details")
   // file name for the output file
-  .option("-fn, --filename <filename>", "Output file name [Without file extension]")
+  .option(
+    "-fn, --filename <filename>",
+    "Output file name [Without file extension]"
+  )
 
   .action(async (options) => {
     message();
@@ -300,58 +303,46 @@ program
           filename
         );
 
-
-
-        // var changesEcharts = await renderTree(
-        //   repoPath,
-        //   options.frequency,
-        //   "echarts",
-        //   false,
-        //   oasFiles[i].oaspath,
-        //   options.output,
-        //   false,
-        //   history_metadata
-        // );
-
-        // var to_render = {
-        //   changesEcharts,
-        //   versionsEchart,
-        //   output: outputDir,
-        //   filename: oasFiles[i].oaspath.split(".")[0],
-        //   history_metadata,
-        // };
-
-        // renderAllCharts(to_render);
-
-        // var metrics = await computeSizeMetrics(
-        //   join(
-        //     repoPath,
-        //     ".previous_versions",
-        //     oasFiles[i].oaspath.split(".")[0]
-        //   )
-        // );
-        // const overrAll = await computeOverallGrowthMetrics(
-        //   join(
-        //     repoPath,
-        //     ".previous_versions",
-        //     oasFiles[i].oaspath.split(".")[0]
-        //   ),
-        //   metrics
-        // );
-        // renderReport(overrAll);
-
-        console.log(
-          `|- Rendering all charts in [html] format for ${oasFiles[i].oaspath}`
+        var changesEcharts = await renderTree(
+          repoPath,
+          options.frequency,
+          format,
+          false,
+          oasFiles[i].oaspath,
+          options.output,
+          false,
+          history_metadata,
+          filename
         );
 
+        if (format == "html" || !format) {
+          var to_render = {
+            changesEcharts,
+            versionsEchart,
+            path: repoPath,
+            output: outputDir,
+            filename: filename ? filename : oasFiles[i].oaspath.split(".")[0],
+            oaspath: oasFiles[i].oaspath.split(".")[0],
+            history_metadata,
+          };
+          renderAllCharts(to_render);
+        }
+
+        var metrics = await computeSizeMetrics(repoPath, oasFiles[i].oaspath);
+        const overrAll = await computeOverallGrowthMetrics(
+          repoPath,
+          oasFiles[i].oaspath
+        );
+        renderReport(overrAll);
         i++;
         if (i < oasFiles.length) {
-          nextFile(i);
+          await nextFile(i);
         } else {
           return true;
         }
       };
       await nextFile(0);
+      return true;
 
       //
     } catch (err) {

@@ -291,10 +291,6 @@ export function createTree(data, f) {
       e["name"] != "components"
   );
 
-
-  console.log(data)
-  // console.log(data);
-
   data = data.map((e) => convert(e, f, data));
 
   let option = {
@@ -335,61 +331,65 @@ export function createTree(data, f) {
 
   return option;
 }
-
-export async function renderTree(path, f, format, aggr, oaspath, output, all, history) {
+/**
+ * 
+ * @param {*} path 
+ * @param {*} f 
+ * @param {*} format 
+ * @param {*} aggr 
+ * @param {*} oaspath 
+ * @param {*} output 
+ * @param {*} all 
+ * @param {*} history 
+ * @param {*} filename 
+ * @returns 
+ */
+export async function renderTree(
+  path,
+  f,
+  format,
+  aggr,
+  oaspath,
+  output,
+  all,
+  history,
+  filename
+) {
   path = join(path, ".previous_versions", oaspath.split(".")[0]);
-  var diffs = fs.readFileSync(join(path, ".diffs.json"), "utf8");
+
+  var diffs = fs.readFileSync(
+    join(path, ".diffs.json"),
+    "utf8"
+  );
   diffs = JSON.parse(diffs);
+
   var changes_frequency = computeFieldFrequency(diffs, path, aggr);
 
-  delete changes_frequency.children.filter((e) => e.name == "info")[0].value
-
-  // if (info) {
-  //   if (info.children.length == 0) {
-  //     // remove info
-  //     changes_frequency.children = changes_frequency.children.filter(
-  //       (e) => !e.name == "info"
-  //     );
-  //   }
-  // }
-
-
-
-
-
-  delete changes_frequency.children.filter((e) => e.name == "tags")[0].value
-
-  delete changes_frequency.children.filter((e) => e.name == "paths")[0].value
-  console.log(changes_frequency.children);
-  // dele
-  // if (tags) {
-  //   if (tags.children.length == 0) {
-  //    console.log("remove tags")
-  //     // changes_frequency.children = changes_frequency.children.filter(
-  //     //   (e) => !e.name == "tags"
-  //     // );
-  //   }
-  // }
-
-  // console.log(changes_frequency.children);
-
-  // var paths = changes_frequency.children.filter((e) =>
-  //   e.name == "paths"
-  // )[0]
-
-  // if (paths) {
-  //   if (paths.children.length == 0) {
-  //     // remove info
-  //     changes_frequency.children = changes_frequency.children.filter((e) =>
-  //       !e.name == "paths"
-  //     );
-  //   }
-  // }
+  delete changes_frequency.children.filter((e) => e.name == "info")[0].value;
+  delete changes_frequency.children.filter((e) => e.name == "tags")[0].value;
+  delete changes_frequency.children.filter((e) => e.name == "paths")[0].value;
 
   fs.writeFileSync(
     join(path, ".changes_frequency.json"),
     JSON.stringify(changes_frequency)
   );
+
+  if (!output) {
+    path = join(path, "..", "..", "APIcture", oaspath.split(".")[0]);
+  } else {
+    path = join(output, oaspath.split(".")[0]);
+  }
+  if (!fs.existsSync(path)) {
+    fs.mkdirSync(path, { recursive: true });
+  }
+
+  if (!filename) {
+    filename = `changes-${oaspath.split(".")[0].replace(" ", "-")}`;
+    output = join(path, filename);
+  } else {
+    filename = `changes-${filename.replace(" ", "-")}`;
+    output = join(path, filename);
+  }
 
   var chartOptions = createTree(changes_frequency, f);
 
@@ -412,124 +412,141 @@ export async function renderTree(path, f, format, aggr, oaspath, output, all, hi
       },
     };
 
-    fs.writeFileSync(
-      join(path, ".changes-visualization.ejs"),
-      `<!DOCTYPE html>
-      <html>
-      <head>
-        <title>API Channges vs. API versioning</title>
-        <style>
-          /* Add any custom CSS styles here */
-        </style>
-      </head>
-      <body>
-        <div id="chartContainer" style="height: 100vh"></div>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/4.1.0/echarts.min.js"></script>
-        <script>
-                  // Initialize ECharts chart with the container element
-                  var chartContainer = document.getElementById('chartContainer');
-                  var chart = echarts.init(chartContainer);
-                  var chartOptions = <%-JSON.stringify(JSON.parse(JSON.stringify(chartOptions))) %>;
-                  
-                  chart.setOption(chartOptions);
-                  window.addEventListener('resize', function() {
-                    chart.resize();
-                  });
-                 
-         </script>
-      </body>
-      </html>`
-    );
-    // if (format == "html") {
-    var template = fs.readFileSync(
-      join(path, ".changes-visualization.ejs"),
-      "utf8",
-      (err, template) => {
-        if (err) {
-          console.error("Error reading template:", err);
-          return;
-        }
-      }
-    );
+    var template = `<!DOCTYPE html>
+   <html>
+   <head>
+     <title>API Changes vs. API versioning</title>
+     <!-- Latest compiled and minified CSS -->
+     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+     <!-- jQuery library -->
+     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+     <!-- Latest compiled JavaScript -->
+     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+     <style>
+       body {
+         /* set font */
+         font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+         font-size: 14px;
+         line-height: 1.5;
+         color: #333;
+         height: 100vh; 
+       }
+       .views-item {
+         height: 800px;
+         box-shadow: #bfc4c6 0px 0px 4px;
+       }
+       .versions {
+         resize: both;
+         overflow: auto;
+     } 
+     .changes {
+       resize: both;
+       overflow: auto;
+   } 
+     </style>
+   </head>
+   <body onLoad="window.scrollTo(0,170)">
+     <div class="container">
+       
+   
+       <div class="row">
+         <div class="col-md-6">
+         <h3>API Meta data</h3>
+         <div class="font-weight-bold">Source: <a href="<%= history_metadata.git_url %>"><%= history_metadata.git_url %></a></div>
+         <div class="font-weight-bold">OAS File: <%= history_metadata.oas_file %></div>
+         <div class="font-weight-bold">API Title: <%= history_metadata.api_titles[history_metadata.api_titles.length - 1].title %> [<%= history_metadata.api_titles[history_metadata.api_titles.length - 1].commit_date %>]</div>
+         <% if (history_metadata.api_titles.length > 1) { %>
+           <table class="table">
+             <thead>
+               <tr>
+                 <th>Commit Date</th>
+                 <th>Version</th>
+                 <th>Title</th>
+               </tr>
+             </thead>
+             <tbody>
+               <% history_metadata.api_titles.forEach((title) => { %>
+                 <tr>
+                   <td><%= title.commit_date %></td>
+                   <td><%= title.version %></td>
+                   <td><%= title.title %></td>
+                 </tr>
+               <% }); %>
+             </tbody>
+           </table>
+         <% } %>
+        
+         
+        
+         </div>
+         <div class="col-md-6">
+         <h3>API Commits and Versions</h3>
+         <table class="table">
+         <tr>
+           <th class="font-weight-bold">Unique Versions</th>
+           <td><%=history_metadata.unique_versions.length%></td>
+         </tr>
+         <tr>
+           <th class="font-weight-bold">API Total Commits</th>
+           <td><%=history_metadata.total_commits %></td>
+         </tr>
+         <tr>
+           <th class="font-weight-bold">API First commit</th>
+           <td><%=history_metadata.first_commit %></td>
+         </tr>
+         <tr>
+           <th class="font-weight-bold">API Last Commit</th>
+           <td><%=history_metadata.last_commit %></td>
+         </tr>
+       </table>
+         </div>
+       </div>
+   
+      
+       <div class="row" id="visualizations">
+        
+         <h3>API Changes</h3>
+           <div id="changes" class="views-item"></div>
+      
+       </div>
+     </div>
+   
+       <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/4.1.0/echarts.min.js"></script>
+       <script>
+         // Initialize ECharts chart with the container element
+         var chartContainer = document.getElementById('changes');
+         var chart = echarts.init(chartContainer);
+         var chartOptions_1 = <%-JSON.stringify(JSON.parse(JSON.stringify(changesEcharts))) %>;
+         chart.setOption(chartOptions_1);
+         window.addEventListener('resize', function() {
+           chart.resize();
+         });
+   
+       </script>
+     </body>
+   </html>
+   `;
 
     var rendered = ejs.render(template, {
-      chartOptions: JSON.parse(JSON.stringify(chartOptions)),
-      format: format,
+      changesEcharts: JSON.parse(JSON.stringify(chartOptions)),
+      history_metadata: history,
     });
 
-    if (!fs.existsSync(join(path, "..", "apivol-outputs"))) {
-      fs.mkdirSync(join(path, "..", "apivol-outputs"), { recursive: true });
-    }
-    fs.writeFileSync(
-      join(path, "..", "apivol-outputs", "changes-visualization.html"),
-      rendered,
-      "utf8",
-      (err) => {
-        if (err) {
-          console.error("Error saving output:", err);
-        } else {
-          console.log("Output saved as", { outputPath });
-        }
-      }
-    );
-    // console log link to the output html file
-    console.log(
-      chalk.greenBright.underline.bold(
-        "|- Output Visualization saved as: ",
-        join(path, "..", "apivol-outputs", "changes-visualization.html")
-      )
-    );
-
-if(!all){
-  delete chartOptions.toolbox 
-  var now = new Date();
-  const chart = echarts.init(null, null, {
-    renderer: "svg", // must use SVG rendering mode
-    ssr: true, // enable SSR
-    width: 500, // need to specify height and width
-    height: 500,
-  });
-
-  chart.setOption(chartOptions);
-  // if not exist fs.mkdirSync(join(path, "..","..", "apivol-outputs"));
-  // if(!fs.mkdirSync(join(path, "..","..", "apivol-outputs"))){
-  //   fs.mkdirSync(join(path, "..","..", "apivol-outputs"))
-  // }
-  const svgStr = chart.renderToSVGString();
-  if(!fs.existsSync(join(path, "..", "..", "apivol-outputs"))){
-    fs.mkdirSync(join(path, "..", "..", "apivol-outputs"), { recursive: true });
-  }
-  fs.writeFileSync(
-    join(path, "..", "..", "apivol-outputs",`changes-${history.api_titles[0].title}` + ".svg"),
-    svgStr,
-    "utf8",
-    (err) => {
+    fs.writeFileSync(output + ".html", rendered, "utf8", (err) => {
       if (err) {
         console.error("Error saving output:", err);
       } else {
         console.log("Output saved as", { outputPath });
       }
-    }
-  );
-  console.log(
-    chalk.greenBright.underline.bold(
-      "|- Output Visualization saved as: " +
-        join(path, "..", "apivol-outputs", "sunburst.svg")
-    )
-  );
-}
-   
-    // open(join(path, "..", "apivol-outputs", "changes-visualization.html"));
+    });
+
     return chartOptions;
   }
-
   // PNG output
-  if (format == "png") {
+  if (format.toLowerCase() == "png") {
     const canvas = createCanvas(800, 800);
-    // ECharts can use the Canvas instance created by node-canvas as a container directly
     const chart = echarts.init(canvas);
     chart.setOption(chartOptions);
-    // render then  as png with good quality with high pixel density and white background
     const buffer = canvas.toBuffer("image/png", {
       compressionLevel: 9,
       filters: canvas.PNG_FILTER_NONE,
@@ -537,27 +554,19 @@ if(!all){
       background: "#ffffff",
     });
 
-    if (!fs.existsSync(join(path, "..", "apivol-outputs"))) {
-      fs.mkdirSync(join(path, "..", "apivol-outputs"), { recursive: true });
-    }
-    fs.writeFileSync(
-      join(path, "..", "apivol-outputs", "changes-visualization.png"),
-      buffer
-    );
+    fs.writeFileSync(output + ".png", buffer, "utf8", (err) => {
+      if (err) {
+        console.error("Error saving output:", err);
+      } else {
+        console.log("Output saved as", { output });
+      }
+    });
 
-    console.log(
-      chalk.greenBright.underline.bold(
-        "|- Output Visualization saved as: " +
-          join(path, "..", "apivol-outputs", "changes-visualization.png")
-      )
-    );
-
-    
-    // open(join(path, "..", "apivol-outputs", "changes-visualization.png"));
+    return chartOptions;
   }
-
   // SVG output
-  if (format == "svg") {
+  if (format.toLowerCase() == "svg") {
+    console.log("SVG output");
     const chart = echarts.init(null, null, {
       renderer: "svg", // must use SVG rendering mode
       ssr: true, // enable SSR
@@ -565,30 +574,23 @@ if(!all){
       height: 500,
     });
 
+    delete chartOptions.toolbox;
     chart.setOption(chartOptions);
+
     const svgStr = chart.renderToSVGString();
-    fs.writeFileSync(
-      join(path, "..", "", "apivol-outputs", "changes-visualization.svg"),
-      svgStr,
-      "utf8",
-      (err) => {
-        if (err) {
-          console.error("Error saving output:", err);
-        } else {
-          console.log("Output saved as", { outputPath });
-        }
+
+    fs.writeFileSync(output + ".svg", svgStr, "utf8", (err) => {
+      if (err) {
+        console.error("Error saving output:", err);
+      } else {
+        console.log("Output saved as", { output });
       }
-    );
-    console.log(
-      chalk.greenBright.underline.bold(
-        "|- Output Visualization saved as: " +
-          join(path, "..", "", "apivol-outputs", "changes-visualization.svg")
-      )
-    );
-    // exit process
-    process.exit(0);
-    // open(join(path, "..", "apivol-outputs", "changes-visualization.svg"));
+    });
+
+    return chartOptions;
   }
+
+  return chartOptions;
 }
 
 function formatBreakingChanges(path) {

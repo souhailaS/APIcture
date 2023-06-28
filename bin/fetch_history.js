@@ -123,6 +123,7 @@ export const fetchHistory = async (repoPath, oaspath) => {
   );
   var invalidFiles = [];
   var apiTitles = [];
+  var apiVersions = [];
   var uniqueVersion = [];
 
   var nextVersion = async (i) => {
@@ -164,6 +165,10 @@ export const fetchHistory = async (repoPath, oaspath) => {
         commit_date: version.date,
         version: oas.info?.version,
       };
+
+
+      apiVersions.push(api_version);
+
       // if the last commit has the same version as this commit then do not add it to the list
       if (uniqueVersion.length == 0) uniqueVersion.push(api_version);
       else if (

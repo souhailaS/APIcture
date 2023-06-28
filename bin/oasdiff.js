@@ -20,176 +20,189 @@ import colors from "ansi-colors";
 
 import yaml_to_json from "js-yaml";
 
-export async function computeDiff(path, oaspath) {
+export async function computeDiff(path, oaspath, isFast) {
+  if (
+    !isFast ||
+    (isFast &&
+      !fs.existsSync(
+        join(path, ".previous_versions", oaspath.split(".")[0], ".diffs.json")
+      ))
+  ) {
+    path = join(path, ".previous_versions", oaspath.split(".")[0]);
+    var api_commits = fs.readFileSync(join(path, ".api_commits.json"));
+    api_commits = JSON.parse(api_commits);
+    fs.writeFileSync(
+      join(path, ".diffs.json"),
+      JSON.stringify([
+        {
+          hash: api_commits[0].hash,
+          diff: {},
+          commit_date: api_commits[0].commit_date,
+        },
+      ])
+    );
 
-  path = join(path, ".previous_versions", oaspath.split(".")[0]);
-  var api_commits = fs.readFileSync(join(path, ".api_commits.json"));
-  api_commits = JSON.parse(api_commits);
-  fs.writeFileSync(
-    join(path, ".diffs.json"),
-    JSON.stringify([
+    // {
+    //   hash: api_commits[i].hash,
+    //   diff: stdout,
+    //   commit_date: api_commits[i].commit_date,
+    // })
+
+    fs.writeFileSync(join(path, ".breaking.json"), JSON.stringify([]));
+    fs.writeFileSync(join(path, ".non-breaking.json"), JSON.stringify([]));
+
+    console.log(
+      chalk.blue(`|- Found ${api_commits.length} commits changing OAS file`)
+    );
+    console.log(
+      // chalk.blue(
+      //   `|-- From ${api_commits[0].commit_date} to ${
+      //     api_commits[api_commits.length - 1].commit_date
+      //   }`
+      // )
+      // fomart the dats as xxth Month, Year
+      chalk.blue(
+        `|-- From [${new Date(
+          api_commits[0].commit_date
+        ).getDate()}th ${new Date(api_commits[0].commit_date).toLocaleString(
+          "default",
+          {
+            month: "long",
+          }
+        )}, ${new Date(
+          api_commits[0].commit_date
+        ).getFullYear()}] to [${new Date(
+          api_commits[api_commits.length - 1].commit_date
+        ).getDate()}th ${new Date(
+          api_commits[api_commits.length - 1].commit_date
+        ).toLocaleString("default", {
+          month: "long",
+        })}, ${new Date(
+          api_commits[api_commits.length - 1].commit_date
+        ).getFullYear()}]`
+      )
+    );
+
+    // show progress bar
+    // add text near the bar
+    var bar = new cliProgress.SingleBar(
       {
-        hash: api_commits[0].hash,
-        diff: {},
-        commit_date: api_commits[0].commit_date,
+        format:
+          "|- Computing diffs - " +
+          colors.cyan("{bar}") +
+          "| {percentage}% || {value}/{total} Chunks || Speed: {speed}",
+        barCompleteChar: "\u2588",
+        barIncompleteChar: "\u2591",
+        hideCursor: true,
       },
-    ])
-  );
 
-  // {
-  //   hash: api_commits[i].hash,
-  //   diff: stdout,
-  //   commit_date: api_commits[i].commit_date,
-  // })
+      cliProgress.Presets.rect
+    );
 
-  fs.writeFileSync(join(path, ".breaking.json"), JSON.stringify([]));
-  fs.writeFileSync(join(path, ".non-breaking.json"), JSON.stringify([]));
+    bar.start(api_commits.length - 1, 0, {
+      speed: "N/A",
+    });
 
-  console.log(
-    chalk.blue(`|- Found ${api_commits.length} commits changing OAS file`)
-  );
-  console.log(
-    // chalk.blue(
-    //   `|-- From ${api_commits[0].commit_date} to ${
-    //     api_commits[api_commits.length - 1].commit_date
-    //   }`
-    // )
-    // fomart the dats as xxth Month, Year
-    chalk.blue(
-      `|-- From [${new Date(api_commits[0].commit_date).getDate()}th ${new Date(
-        api_commits[0].commit_date
-      ).toLocaleString("default", {
-        month: "long",
-      })}, ${new Date(
-        api_commits[0].commit_date
-      ).getFullYear()}] to [${new Date(
-        api_commits[api_commits.length - 1].commit_date
-      ).getDate()}th ${new Date(
-        api_commits[api_commits.length - 1].commit_date
-      ).toLocaleString("default", {
-        month: "long",
-      })}, ${new Date(
-        api_commits[api_commits.length - 1].commit_date
-      ).getFullYear()}]`
-    )
-  );
+    var next_pair = async (i) => {
+      // console.log(
+      //   chalk.blue(
+      //     `|-- Computing diff between ${api_commits[i - 1].hash} and ${
+      //       api_commits[i].hash
+      //     }`
+      //   )
+      // );
+      bar.update(i);
+      if (api_commits[i]) {
+        try {
+          var cmd = `oasdiff -base  ${join(
+            path,
+            api_commits[i - 1].hash + "." + api_commits[i - 1].fileExtension
+          )} -revision ${join(
+            path,
+            api_commits[i].hash + "." + api_commits[i].fileExtension
+          )} -exclude-examples`;
 
-  // show progress bar
-  // add text near the bar
-  var bar = new cliProgress.SingleBar(
-    {
-      format:
-        "|- Computing diffs - " +
-        colors.cyan("{bar}") +
-        "| {percentage}% || {value}/{total} Chunks || Speed: {speed}",
-      barCompleteChar: "\u2588",
-      barIncompleteChar: "\u2591",
-      hideCursor: true,
-    },
+          var { stdout, stderr } = await exec(cmd);
+          // convert yaml to json
 
-    cliProgress.Presets.rect
-  );
+          stdout = yaml_to_json.load(stdout);
 
-  bar.start(api_commits.length - 1, 0, {
-    speed: "N/A",
-  });
-
-  var next_pair = async (i) => {
-    // console.log(
-    //   chalk.blue(
-    //     `|-- Computing diff between ${api_commits[i - 1].hash} and ${
-    //       api_commits[i].hash
-    //     }`
-    //   )
-    // );
-    bar.update(i);
-    if (api_commits[i]) {
-      try {
-        var cmd = `oasdiff -base  ${join(
-          path,
-          api_commits[i - 1].hash + "." + api_commits[i - 1].fileExtension
-        )} -revision ${join(
-          path,
-          api_commits[i].hash + "." + api_commits[i].fileExtension
-        )} -exclude-examples`;
-
-        var { stdout, stderr } = await exec(cmd);
-        // convert yaml to json
-
-        stdout = yaml_to_json.load(stdout);
-
-        var diffs = fs.readFileSync(join(path, ".diffs.json"));
-        diffs = JSON.parse(diffs);
-        diffs.push({
-          hash: api_commits[i].hash,
-          diff: stdout,
-          commit_date: api_commits[i].commit_date,
-        });
-
-        fs.writeFileSync(join(path, ".diffs.json"), JSON.stringify(diffs));
-
-        // diff 1 -check-non-breaking
-        if (stdout) {
-          var nonBreakingChanges = await extractNonBreakingChanges(stdout);
-          var nonBreakingChangesArray = fs.readFileSync(
-            join(path, ".non-breaking.json")
-          );
-          nonBreakingChangesArray = JSON.parse(nonBreakingChangesArray);
-          nonBreakingChangesArray.push({
+          var diffs = fs.readFileSync(join(path, ".diffs.json"));
+          diffs = JSON.parse(diffs);
+          diffs.push({
             hash: api_commits[i].hash,
-            nonBreakingChanges: nonBreakingChanges,
+            diff: stdout,
+            commit_date: api_commits[i].commit_date,
+          });
+
+          fs.writeFileSync(join(path, ".diffs.json"), JSON.stringify(diffs));
+
+          // diff 1 -check-non-breaking
+          if (stdout) {
+            var nonBreakingChanges = await extractNonBreakingChanges(stdout);
+            var nonBreakingChangesArray = fs.readFileSync(
+              join(path, ".non-breaking.json")
+            );
+            nonBreakingChangesArray = JSON.parse(nonBreakingChangesArray);
+            nonBreakingChangesArray.push({
+              hash: api_commits[i].hash,
+              nonBreakingChanges: nonBreakingChanges,
+              commit_date: api_commits[i].commit_date,
+            });
+            fs.writeFileSync(
+              join(path, ".non-breaking.json"),
+              JSON.stringify(nonBreakingChangesArray)
+            );
+          }
+
+          // diff 2 -check-breaking
+          var cmd_2 = `oasdiff -check-breaking -base  ${join(
+            path,
+            api_commits[i - 1].hash + "." + api_commits[i - 1].fileExtension
+          )} -revision ${join(
+            path,
+            api_commits[i].hash + "." + api_commits[i].fileExtension
+          )} -exclude-examples  -format json`;
+
+          var { stdout, stderr } = await exec(cmd_2);
+
+          var diff_2 = stdout;
+          var breaking = fs.readFileSync(join(path, ".breaking.json"));
+          breaking = JSON.parse(breaking);
+          breaking.push({
+            hash: api_commits[i].hash,
+            breaking: JSON.parse(diff_2),
             commit_date: api_commits[i].commit_date,
           });
           fs.writeFileSync(
-            join(path, ".non-breaking.json"),
-            JSON.stringify(nonBreakingChangesArray)
+            join(path, ".breaking.json"),
+            JSON.stringify(breaking)
           );
+        } catch (error) {
+          // if (error.reason != "duplicated mapping key") console.log(error);
         }
 
-        // diff 2 -check-breaking
-        var cmd_2 = `oasdiff -check-breaking -base  ${join(
-          path,
-          api_commits[i - 1].hash + "." + api_commits[i - 1].fileExtension
-        )} -revision ${join(
-          path,
-          api_commits[i].hash + "." + api_commits[i].fileExtension
-        )} -exclude-examples  -format json`;
-
-        var { stdout, stderr } = await exec(cmd_2);
-
-        var diff_2 = stdout;
-        var breaking = fs.readFileSync(join(path, ".breaking.json"));
-        breaking = JSON.parse(breaking);
-        breaking.push({
-          hash: api_commits[i].hash,
-          breaking: JSON.parse(diff_2),
-          commit_date: api_commits[i].commit_date,
-        });
-        fs.writeFileSync(
-          join(path, ".breaking.json"),
-          JSON.stringify(breaking)
-        );
-      } catch (error) {
-        // if (error.reason != "duplicated mapping key") console.log(error);
-      }
-
-      if (i < api_commits.length - 1) {
-        i++;
-        return await next_pair(i);
+        if (i < api_commits.length - 1) {
+          i++;
+          return await next_pair(i);
+        } else {
+          console.log(chalk.blue("|- Done"));
+          bar.stop();
+          return;
+        }
       } else {
         console.log(chalk.blue("|- Done"));
-        bar.stop();
+
         return;
       }
-    } else {
-      console.log(chalk.blue("|- Done"));
+    };
 
-      return;
-    }
-  };
-
-  await next_pair(1);
-  //  bar.stop();
+    await next_pair(1);
+    //  bar.stop();
+  }
+  else {
+    console.log(("|- Fast mode. Diff files already exist."));
+  }
   return;
 }
 
@@ -709,5 +722,6 @@ async function extractNonBreakingChanges(diff) {
       }
     }
   }
+
   return nonBreakingChanges;
 }

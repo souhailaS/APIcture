@@ -12,6 +12,20 @@ import chalk from "chalk";
 import open from "open";
 import dayjs from "dayjs";
 
+/**
+ *
+ * @param {*} commit
+ * @param {*} data
+ * @param {*} previous_version
+ * @param {*} color_dict
+ * @param {*} breakings
+ * @param {*} non_breakings
+ * @param {*} content
+ * @param {*} useSemver
+ * @param {*} versionColors
+ * @param {*} isFirst
+ * @returns
+ */
 async function createSunburst(
   commit,
   data,
@@ -413,7 +427,25 @@ function generateGrayGradient(maxNumber) {
   return gradient;
 }
 
-export async function generateChangesViz(path, format, oaspath, output, all, history) {
+/**
+ *
+ * @param {*} path
+ * @param {*} format
+ * @param {*} oaspath
+ * @param {*} output
+ * @param {*} all
+ * @param {*} history
+ * @returns
+ */
+export async function generateChangesViz(
+  path,
+  format,
+  oaspath,
+  output,
+  all,
+  history,
+  filename
+) {
   let chartOptions = {
     tooltip: {
       trigger: "item",
@@ -435,41 +467,41 @@ export async function generateChangesViz(path, format, oaspath, output, all, his
   };
 
   path = join(path, ".previous_versions", oaspath.split(".")[0]);
+
   var data = [];
-  var commits = fs.readFileSync(join(path, ".api_commits.json"));
-  commits = JSON.parse(commits);
 
-  // sort the commits by date
-  commits.sort((a, b) => {
-    return new Date(a.commit_date) - new Date(b.commit_date);
+  try {
+    var commits = fs.readFileSync(join(path, ".api_commits.json"));
+    commits = JSON.parse(commits);
+    commits.sort((a, b) => {
+      return new Date(a.commit_date) - new Date(b.commit_date);
+    });
+
+    var breakings = fs.readFileSync(join(path, ".breaking.json"));
+    breakings = JSON.parse(breakings);
+
+    var nonBreaking = fs.readFileSync(join(path, ".non-breaking.json"));
+    nonBreaking = JSON.parse(nonBreaking);
+
+    var years = commits.map((commit) => {
+      // parse the date
+      commit.commit_date = new Date(commit.commit_date);
+      return commit.commit_date.getFullYear();
+    });
+
+    // sort the years
+    years.sort((a, b) => {
+      return a - b;
+    });
+  } catch (e) {
+    var error = new Error("No previous versions found");
+    error.code = "ENOENT";
+    throw error;
+  }
+
+  var versions = history.unique_versions.map((version) => {
+    return version.version;
   });
-
-  var breakings = fs.readFileSync(join(path, ".breaking.json"));
-  breakings = JSON.parse(breakings);
-
-  var nonBreaking = fs.readFileSync(join(path, ".non-breaking.json"));
-  nonBreaking = JSON.parse(nonBreaking);
-
-  var years = commits.map((commit) => {
-    // parse the date
-    commit.commit_date = new Date(commit.commit_date);
-    return commit.commit_date.getFullYear();
-  });
-
-  // sort the years
-  years.sort((a, b) => {
-    return a - b;
-  });
-
-  var versions = commits.map(async (commit) => {
-    return (
-      await SwaggerParser.parse(
-        join(path, commit.hash + "." + commit.fileExtension)
-      )
-    ).info.version;
-  });
-
-  versions = await Promise.all(versions);
 
   // check is anny of the vrsions use semver
   var isSemver =
@@ -477,11 +509,11 @@ export async function generateChangesViz(path, format, oaspath, output, all, his
       return semver.valid(version);
     }).length > 0;
 
+  // get color for each version
   var versionColors = generateUniqueColors([...new Set(versions)]);
-
-  // get the unique years
   years = [...new Set(years)];
 
+  // color for each year
   var colors = generateGrayGradient(years.length);
   // assign a color to each year
   var color_dict = {};
@@ -489,6 +521,7 @@ export async function generateChangesViz(path, format, oaspath, output, all, his
     color_dict[year] = colors[index];
   });
 
+  // analysing the commits
   var i = 0;
 
   var nextCommit = async function (commit) {
@@ -505,6 +538,20 @@ export async function generateChangesViz(path, format, oaspath, output, all, his
         join(path, commit.hash + "." + commit.fileExtension)
       );
 
+      /**
+       *
+       * @param {*} commit
+       * @param {*} data
+       * @param {*} previous_version
+       * @param {*} color_dict
+       * @param {*} breakings
+       * @param {*} non_breakings
+       * @param {*} content
+       * @param {*} useSemver
+       * @param {*} versionColors
+       * @param {*} isFirst
+       * @returns
+       */
       await createSunburst(
         commit,
         data,
@@ -520,35 +567,84 @@ export async function generateChangesViz(path, format, oaspath, output, all, his
       );
     } catch (e) {
       console.log(e);
-      // console.log("PROBLEM");
     }
     i = i + 1;
     if (i < commits.length) {
       return await nextCommit(commits[i]);
     } else {
-      // console.log(JSON.stringify(data, null, 2));
-      fs.writeFileSync(
-        join(path, ".test-options.json"),
-        JSON.stringify(chartOptions, null, 2)
-      );
-      // levelsConfig(isSemver, chartOptions);
       levelsConfig(false, chartOptions);
       fs.writeFileSync(
         join(path, ".sunburst-source.json"),
         JSON.stringify(chartOptions, null, 2)
       );
       chartOptions.series.data = data;
-      renderSunburst(chartOptions, format, path, oaspath, output, all, history);
+
+      /**
+       *
+       * @param {*} chartOptions
+       * @param {*} format
+       * @param {*} path
+       * @param {*} oaspath
+       * @param {*} output
+       * @param {*} all
+       * @param {*} history
+       * @returns
+       */
+      renderSunburst(
+        chartOptions,
+        format,
+        path,
+        oaspath,
+        output,
+        all,
+        history,
+        filename
+      );
 
       return chartOptions;
     }
   };
 
   await nextCommit(commits[i]);
-
   return chartOptions;
 }
-function renderSunburst(chartOptions, format, path, oaspath, output, all, history) {
+/**
+ *
+ * @param {*} chartOptions
+ * @param {*} format
+ * @param {*} path
+ * @param {*} oaspath
+ * @param {*} output
+ * @param {*} all
+ * @param {*} history
+ * @returns
+ */
+function renderSunburst(
+  chartOptions,
+  format,
+  path,
+  oaspath,
+  output,
+  all,
+  history,
+  filename
+) {
+  if (!output) {
+    path = join(path, "..", "..", "APIcture", oaspath.split(".")[0]);
+  } else {
+    path = join(path, "..", "..", output, oaspath.split(".")[0]);
+  }
+  if (!fs.existsSync(path)) {
+    fs.mkdirSync(path, { recursive: true });
+  }
+
+  if (!filename) {
+    filename = `version-clock-${oaspath.split(".")[0].replace(" ", "-")}`;
+    output = join(path, filename);
+  } else {
+    output = join(path, filename);
+  }
+
   if (format == "html" || !format || format == "echarts") {
     chartOptions.series.sort = null;
     chartOptions.toolbox = {
@@ -572,161 +668,122 @@ function renderSunburst(chartOptions, format, path, oaspath, output, all, histor
     var template = `<!DOCTYPE html>
       <html>
       <head>
-        <title>API Channges vs. API versioning</title>
+      <title>API Version Clock</title>
+      <!-- Latest compiled and minified CSS -->
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+      <!-- jQuery library -->
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+      <!-- Latest compiled JavaScript -->
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
         <style>
-          /* Add any custom CSS styles here */
+        body {
+          /* set font */
+          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+          font-size: 14px;
+          line-height: 1.5;
+          color: #333;
+          height: 100vh; 
+        }
+        .views-item {
+          height: 600px;
+          box-shadow: #bfc4c6 0px 0px 4px;
+        }
+        .versions {
+          resize: both;
+          overflow: auto;
+      } 
+      .changes {
+        resize: both;
+        overflow: auto;
+    } 
         </style>
       </head>
       <body>
-        <div id="chartContainer" style="height: 100vh"></div>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/4.1.0/echarts.min.js"></script>
-        <script>
-                  // Initialize ECharts chart with the container element
-                  var chartContainer = document.getElementById('chartContainer');
-                  var chart = echarts.init(chartContainer);
-                  var chartOptions = <%-JSON.stringify(JSON.parse(JSON.stringify(chartOptions))) %>;
-                  chart.setOption(chartOptions);
-
-                  chart.setOption(chartOptions);
-                  window.addEventListener('resize', function() {
-                    chart.resize();
-                  });
-         </script>
+      <div class="container">
+      <div class="row">
+        <div class="col-md-6">
+        <h3>API Meta data</h3>
+        <div class="font-weight-bold">Source: <a href="<%= history_metadata.git_url %>"><%= history_metadata.git_url %></a></div>
+        <div class="font-weight-bold">OAS File: <%= history_metadata.oas_file %></div>
+        <div class="font-weight-bold">API Title: <%= history_metadata.api_titles[history_metadata.api_titles.length - 1].title %> [<%= history_metadata.api_titles[history_metadata.api_titles.length - 1].commit_date %>]</div>
+        <% if (history_metadata.api_titles.length > 1) { %>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Commit Date</th>
+                <th>Version</th>
+                <th>Title</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% history_metadata.api_titles.forEach((title) => { %>
+                <tr>
+                  <td><%= title.commit_date %></td>
+                  <td><%= title.version %></td>
+                  <td><%= title.title %></td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        <% } %>      
+        </div>
+        <div class="col-md-6">
+        <h3>API Commits and Versions</h3>
+        <table class="table">
+        <tr>
+          <th class="font-weight-bold">Unique Versions</th>
+          <td><%=history_metadata.unique_versions.length%></td>
+        </tr>
+        <tr>
+          <th class="font-weight-bold">API Total Commits</th>
+          <td><%=history_metadata.total_commits %></td>
+        </tr>
+        <tr>
+          <th class="font-weight-bold">API First commit</th>
+          <td><%=history_metadata.first_commit %></td>
+        </tr>
+        <tr>
+          <th class="font-weight-bold">API Last Commit</th>
+          <td><%=history_metadata.last_commit %></td>
+        </tr>
+      </table>
+        </div>
+      </div>   
+      <div class="row" id="visualizations">
+        <h3>API Version Clock</h3>
+          <div id="versions" class="views-item"></div>
+      </div>
+    </div>
+  
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/4.1.0/echarts.min.js"></script>
+      <script>
+        var chartContainer = document.getElementById('versions');
+        var chart = echarts.init(chartContainer);
+        var chartOptions_2 = <%-JSON.stringify(JSON.parse(JSON.stringify(versionsEcharts))) %>;
+        chart.setOption(chartOptions_2);
+        window.addEventListener('resize', function() {
+            chart.resize();
+        });
+      </script>      
       </body>
       </html>`;
 
-    // if (format == "html") {
-    // var template = fs.readFileSync(
-    //   join(path, ".sunburst.ejs"),
-    //   "utf8",
-    //   (err, template) => {
-    //     if (err) {
-    //       console.error("Error reading template:", err);
-    //       return;
-    //     }
-    //   }
-    // );
-    if (!all) {
-      var rendered = ejs.render(template, {
-        chartOptions: JSON.parse(JSON.stringify(chartOptions)),
-        format: format,
-      });
-
-      if (!fs.existsSync(join(path, "..", "apivol-outputs"))) {
-        fs.mkdirSync(join(path, "..", "apivol-outputs"), { recursive: true });
-      }
-
-      if (!output) {
-        output = join(
-          path,
-          "..",
-          "apivol-outputs",
-          `versions-clock-${oaspath.split(".")[0]}-api.html`
-        );
-      }
-
-      fs.writeFileSync(output, rendered, "utf8", (err) => {
-        if (err) {
-          console.error("Error saving output:", err);
-        } else {
-          console.log("Output saved as", { outputPath });
-        }
-      });
-      // console log link to the output html file
-      console.log(
-        chalk.greenBright.underline.bold(
-          "|- Output Visualization saved as: ",
-          output
-        )
-      );
-
-      var now = new Date();
-      const chart = echarts.init(null, null, {
-        renderer: "svg", // must use SVG rendering mode
-        ssr: true, // enable SSR
-        width: 500, // need to specify height and width
-        height: 500,
-      });
-      levelsConfig(true, chartOptions);
-      chart.setOption(chartOptions);
-      // if not exist fs.mkdirSync(join(path, "..","..", "apivol-outputs"));
-      // if(!fs.mkdirSync(join(path, "..","..", "apivol-outputs"))){
-      //   fs.mkdirSync(join(path, "..","..", "apivol-outputs"))
-      // }
-      const svgStr = chart.renderToSVGString();
-  
-      if (!fs.existsSync(join(path, "..", "..", "apivol-outputs"))) {
-        fs.mkdirSync(join(path, "..", "..", "apivol-outputs"), {
-          recursive: true,
-        });
-      }
-  
-      fs.writeFileSync(
-        join(
-          path,
-          "..",
-          "..",
-          "apivol-outputs",
-        `versions-${history.api_titles[0].title}` + ".svg"
-        ),
-        svgStr,
-        "utf8",
-        (err) => {
-          if (err) {
-            console.error("Error saving output:", err);
-          } else {
-            console.log("Output saved as", { outputPath });
-          }
-        }
-      );
-      console.log(
-        chalk.greenBright.underline.bold(
-          "|- Output Visualization saved as: " +
-            join(path, "..", "apivol-outputs", "sunburst.svg")
-        )
-      );
-    }
-
-   
-
-    return chartOptions;
-    // open(join(path, "..", "apivol-outputs", "sunburst.html"));
-  }
-
-  // PNG output
-  if (format == "png") {
-    const canvas = createCanvas(800, 800);
-    // ECharts can use the Canvas instance created by node-canvas as a container directly
-    const chart = echarts.init(canvas);
-    chart.setOption(chartOptions);
-    // render then  as png with good quality with high pixel density and white background
-    const buffer = canvas.toBuffer("image/png", {
-      compressionLevel: 9,
-      filters: canvas.PNG_FILTER_NONE,
-      resolution: 900,
-      background: "#ffffff",
+    var rendered = ejs.render(template, {
+      versionsEcharts: JSON.parse(JSON.stringify(chartOptions)),
+      history_metadata: history,
     });
 
-    if (!fs.existsSync(join(path, "..", "apivol-outputs"))) {
-      fs.mkdirSync(join(path, "..", "apivol-outputs"), { recursive: true });
-    }
-    fs.writeFileSync(
-      join(path, "..", "apivol-outputs", "sunburst.png"),
-      buffer
-    );
-
-    console.log(
-      chalk.greenBright.underline.bold(
-        "|- Output Visualization saved as: " +
-          join(path, "..", "apivol-outputs", "sunburst.png")
-      )
-    );
-
-    // open(join(path, "..", "apivol-outputs", "sunburst.png"));
+    fs.writeFileSync(output + ".html", rendered, "utf8", (err) => {
+      if (err) {
+        console.error("Error saving output:", err);
+      } else {
+        console.log("Output saved as", { output });
+      }
+    });
+    return chartOptions;
   }
 
-  // SVG output
-  if (format == "svg") {
+  if (format.toLowerCase() == "svg") {
     const chart = echarts.init(null, null, {
       renderer: "svg", // must use SVG rendering mode
       ssr: true, // enable SSR
@@ -734,33 +791,51 @@ function renderSunburst(chartOptions, format, path, oaspath, output, all, histor
       height: 500,
     });
 
+    levelsConfig(true, chartOptions);
     chart.setOption(chartOptions);
-    // if not exist fs.mkdirSync(join(path, "..","..", "apivol-outputs"));
-    // if(!fs.mkdirSync(join(path, "..","..", "apivol-outputs"))){
-    //   fs.mkdirSync(join(path, "..","..", "apivol-outputs"))
-    // }
+
     const svgStr = chart.renderToSVGString();
-    fs.writeFileSync(
-      join(path, "..", "..", "apivol-outputs", "sunburst.svg"),
-      svgStr,
-      "utf8",
-      (err) => {
-        if (err) {
-          console.error("Error saving output:", err);
-        } else {
-          console.log("Output saved as", { outputPath });
-        }
+
+    fs.writeFileSync(output + ".svg", svgStr, "utf8", (err) => {
+      if (err) {
+        console.error("Error saving output:", err);
+      } else {
+        console.log("Output saved as", { output });
       }
+    });
+
+    console.log(
+      chalk.greenBright.underline.bold(
+        "|- Output Visualization saved as: " + path
+      )
     );
+    return chartOptions;
+  }
+  // PNG output
+  if (format.toLowerCase() == "png") {
+    const canvas = createCanvas(800, 800);
+    const chart = echarts.init(canvas);
+    chart.setOption(chartOptions);
+    const buffer = canvas.toBuffer("image/png", {
+      compressionLevel: 9,
+      filters: canvas.PNG_FILTER_NONE,
+      resolution: 900,
+      background: "#ffffff",
+    });
+
+    fs.writeFileSync(output + ".png", buffer, "utf8", (err) => {
+      if (err) {
+        console.error("Error saving output:", err);
+      } else {
+        console.log("Output saved as", { output });
+      }
+    });
     console.log(
       chalk.greenBright.underline.bold(
         "|- Output Visualization saved as: " +
-          join(path, "..", "apivol-outputs", "sunburst.svg")
+          join(path, "..", "apicture", "sunburst.png")
       )
     );
-    // exit process
-    process.exit(0);
-    // open(join(path, "..", "apivol-outputs", "sunburst.svg"));
   }
 
   return;

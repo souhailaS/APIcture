@@ -31,8 +31,6 @@ import { renderAllCharts } from "../render_all_viz.js";
 import chalk from "chalk";
 import { join } from "path";
 
-
-
 /**
  * Generate the versions clock view.
  */
@@ -216,7 +214,7 @@ program
   });
 
 function message() {
-  console.log();
+  // console.log();
   // console.log(
   //   chalk.bold.yellow(
   //     "  _______  _______  _______  _______  _______  _______  "
@@ -224,7 +222,7 @@ function message() {
   // );
   console.log();
   console.log(
-    " " +
+    " [" +
       chalk.bold.yellow("A") +
       chalk.bold.blue("P") +
       chalk.bold.green("I") +
@@ -233,114 +231,127 @@ function message() {
       chalk.bold.cyan("u") +
       chalk.bold.yellow("r") +
       chalk.bold.magenta("e") +
-      " :  A CLI tool to visually depict API evolution"
+      " :  A CLI tool to visually depict API evolution]"
   );
-  console.log(
-    chalk.bold.yellow(
-      "  _______  _______  _______  _______  _______  _______  "
-    )
-  );
+  // console.log(
+  //   chalk.bold.yellow(
+  //     "  _______  _______  _______  _______  _______  _______  "
+  //   )
+  // );
   console.log();
 }
 
+/**
+ * If no parameter is passed generate both the version clock and changes visualizations
+ */
 program
-  .description("Generate changes and versioning visualizations")
+  .description("Generate Evolution visualizations")
   .option(
     "-r, --repo <path>",
     "Path to the repository. Defaults to current working directory."
   )
   .option("-o, --output <path>", "Path to the output directory")
+  .option("-freq, --frequency <frequency>", "Minimum frequency of changes")
+  .option("-fs, --fast", "Fast mode")
   .option("-f, --format <format>", "Output format")
-  .option("-fs", "--fast", "Fast mode")
   .option("-a, --all", "Generate OAS for all OAS files found in the repo")
   .option("-d, --details", "Show details")
-  .option("-freq, --frequency <frequency>", "Minimum frequency of changes")
+  // file name for the output file
+  .option("-fn, --filename <filename>", "Output file name [Without file extension]")
+
   .action(async (options) => {
     message();
+
     const repoPath = options.repo || process.cwd();
     const outputDir = options.output;
-    const format = options.format || "html";
-    const filename = options.filename || "evolution-visualization";
+    const format = options.format;
+    const filename = options.filename;
+    const fast = options.fast || false;
+
     try {
       var oasFiles = [];
-      if (!options.fast) {
-        oasFiles = await fetchOASFiles(repoPath, options.all);
 
-        var nextFile = async (i) => {
-          var history_metadata = await fetchHistory(
-            repoPath,
-            oasFiles[i].oaspath
-          );
+      oasFiles = await fetchOASFiles(repoPath, options.all);
+      var nextFile = async (i) => {
+        var history_metadata = await fetchHistory(
+          repoPath,
+          oasFiles[i].oaspath
+        );
 
-          if (history_metadata?.total_commits > 10) {
-            console.log(history_metadata);
-            // console.log(history_metadata);
-            await computeDiff(repoPath, oasFiles[i].oaspath);
-            //chartOptions, format, path, oaspath, output, all, history
-            var versionsEchart = await generateChangesViz(
-              repoPath,
-              "echarts",
-              oasFiles[i].oaspath,
-              options.output,
-              options.all,
-              history_metadata
-            );
+        await computeDiff(repoPath, oasFiles[i].oaspath, fast);
 
-            var changesEcharts = await renderTree(
-              repoPath,
-              options.frequency,
-              "echarts",
-              false,
-              oasFiles[i].oaspath,
-              options.output,
-              false,
-              history_metadata
-            );
+        /**
+         *
+         * @param {*} path
+         * @param {*} format
+         * @param {*} oaspath
+         * @param {*} output
+         * @param {*} all
+         * @param {*} history
+         * @returns
+         */
+        var versionsEchart = await generateChangesViz(
+          repoPath,
+          format,
+          oasFiles[i].oaspath,
+          outputDir,
+          options.all,
+          history_metadata,
+          filename
+        );
 
-            var to_render = {
-              changesEcharts,
-              versionsEchart,
-              output: outputDir,
-              filename: oasFiles[i].oaspath.split(".")[0],
-              history_metadata,
-            };
 
-            renderAllCharts(to_render);
 
-            var metrics = await computeSizeMetrics(
-              join(
-                repoPath,
-                ".previous_versions",
-                oasFiles[i].oaspath.split(".")[0]
-              )
-            );
-            const overrAll = await computeOverallGrowthMetrics(
-              join(
-                repoPath,
-                ".previous_versions",
-                oasFiles[i].oaspath.split(".")[0]
-              ),
-              metrics
-            );
-            renderReport(overrAll);
+        // var changesEcharts = await renderTree(
+        //   repoPath,
+        //   options.frequency,
+        //   "echarts",
+        //   false,
+        //   oasFiles[i].oaspath,
+        //   options.output,
+        //   false,
+        //   history_metadata
+        // );
 
-            console.log(
-              `|- Rendering all charts in [html] format for ${oasFiles[i].oaspath}`
-            );
-          } else {
-            console.log(
-              `|- Skipping ${oasFiles[i].oaspath} as it has less than 10 commits`
-            );
-          }
-          i++;
-          if (i < oasFiles.length) {
-            nextFile(i);
-          } else {
-            return true;
-          }
-        };
-        await nextFile(0);
-      }
+        // var to_render = {
+        //   changesEcharts,
+        //   versionsEchart,
+        //   output: outputDir,
+        //   filename: oasFiles[i].oaspath.split(".")[0],
+        //   history_metadata,
+        // };
+
+        // renderAllCharts(to_render);
+
+        // var metrics = await computeSizeMetrics(
+        //   join(
+        //     repoPath,
+        //     ".previous_versions",
+        //     oasFiles[i].oaspath.split(".")[0]
+        //   )
+        // );
+        // const overrAll = await computeOverallGrowthMetrics(
+        //   join(
+        //     repoPath,
+        //     ".previous_versions",
+        //     oasFiles[i].oaspath.split(".")[0]
+        //   ),
+        //   metrics
+        // );
+        // renderReport(overrAll);
+
+        console.log(
+          `|- Rendering all charts in [html] format for ${oasFiles[i].oaspath}`
+        );
+
+        i++;
+        if (i < oasFiles.length) {
+          nextFile(i);
+        } else {
+          return true;
+        }
+      };
+      await nextFile(0);
 
       //
     } catch (err) {

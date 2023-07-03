@@ -22,9 +22,12 @@ const HTML = `<!DOCTYPE html>
       line-height: 1.5;
       color: #333;
       height: 100vh; 
+      margin-left:50px;
+      margin-right:50px;
     }
     .views-item {
-      height: 600px;
+      height: 800px;
+      width:800px;
       box-shadow: #bfc4c6 0px 0px 4px;
     }
     .versions {
@@ -35,6 +38,22 @@ const HTML = `<!DOCTYPE html>
     resize: both;
     overflow: auto;
 } 
+#visualizations{
+  display:flex;
+  flex-direction:row;
+  justify-content:space-between;
+}
+#structure-metrics {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+#schema-metrics {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
   </style>
 </head>
 <body onLoad="window.scrollTo(0,170)">
@@ -95,17 +114,37 @@ const HTML = `<!DOCTYPE html>
     </div>
 
    
-    <div class="row" id="visualizations">
-      <div class="col-md-6">
-      <h3>API Version Clock</h3>
-        <div id="versions" class="views-item"></div>
-      </div>
-      <div class="col-md-6">
-      <h3>API Changes</h3>
-        <div id="changes" class="views-item"></div>
-      </div>
+   
+  </div>
+  <div class="row" id="visualizations">
+  <div>
+  <h3>API Version Clock</h3>
+    <div id="versions" class="views-item"></div>
+  </div>
+  <div>
+  <h3>API Changes</h3>
+    <div id="changes" class="views-item"></div>
+  </div>
+</div>
+  <h3>Metrics</h3>
+  <div id="metrics-container">
+  <div id="metrcis-views-container" >
+    <div id="structure-metrics">
+      <div
+        id="metrics-echart"
+        class="metrics-views-item"
+        style="width: 33vw; height: 45vh"
+      ></div>
+      <div id="parameters-echart" style="width: 33vw; height: 45vh"></div>
+      <div id="methods-echart" style="width: 33vw; height: 45vh"></div>
+    </div>
+    <div id="schema-metrics">
+      <div id="schema-echart" style="width: 33vw; height: 45vh"></div>
+      <div id="radar-echart" style="width: 46vw; height: 45vh"></div>
+      <div id="methods-breaking" style="width: 38vw; height: 45vh"></div>
     </div>
   </div>
+</div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/4.1.0/echarts.min.js"></script>
     <script>
@@ -125,6 +164,62 @@ const HTML = `<!DOCTYPE html>
       window.addEventListener('resize', function() {
           chart.resize();
       });
+
+
+      // render metrics
+      if(<%=options.endpoints%> || <%=!usedOptions%>){
+        var myChart1 = echarts.init(document.getElementById("metrics-echart"));
+        var chartOptions1 = <%-JSON.stringify(JSON.parse(JSON.stringify(metrics.option1))) %>;
+        myChart1.setOption(chartOptions1); 
+        window.addEventListener('resize', function() {
+          myChart1.resize();
+        });  
+        }
+
+      
+        if(<%=options.parameters%> || <%=!usedOptions%>){
+        var myChart2 = echarts.init(document.getElementById("parameters-echart"));
+        var chartOptions2 = <%-JSON.stringify(JSON.parse(JSON.stringify(metrics.option2))) %>;
+        myChart2.setOption(chartOptions2);
+        window.addEventListener('resize', function() {
+            myChart2.resize();
+            });
+        }
+        myChart2.setOption(chartOptions2);
+
+        if(<%=options.methods%> || <%=!usedOptions%>){
+        var myChart3 = echarts.init(document.getElementById("methods-echart"));
+        var chartOptions3 = <%-JSON.stringify(JSON.parse(JSON.stringify(metrics.option3))) %>;
+        myChart3.setOption(chartOptions3);
+        window.addEventListener('resize', function() {
+            myChart3.resize();
+            });
+        }
+
+        if(<%=options.datamodel%> || <%=!usedOptions%>){
+        var myChart4 = echarts.init(document.getElementById("schema-echart"));
+        var chartOptions4 = <%-JSON.stringify(JSON.parse(JSON.stringify(metrics.option4))) %>;
+        myChart4.setOption(chartOptions4);
+        window.addEventListener('resize', function() {
+            myChart4.resize();
+            });
+        }
+        if(<%=options.breakingChanges%>|| <%=!usedOptions%>){
+        var myChart5 = echarts.init(document.getElementById("radar-echart"));
+        var chartOptions5 = <%-JSON.stringify(JSON.parse(JSON.stringify(metrics.option5))) %>;
+        myChart5.setOption(chartOptions5);
+        window.addEventListener('resize', function() {
+            myChart5.resize();
+            });
+        }
+        if(<%=options.breakingMethods%> || <%=!usedOptions%>){
+        var myChart6 = echarts.init(document.getElementById("methods-breaking"));
+        var chartOptions6 = <%-JSON.stringify(JSON.parse(JSON.stringify(metrics.option6))) %>;
+        myChart6.setOption(chartOptions6);
+        window.addEventListener('resize', function() {
+            myChart6.resize();
+            });
+        }
     </script>
   </body>
 </html>
@@ -135,6 +230,9 @@ export function renderAllCharts(input) {
     changesEcharts: JSON.parse(JSON.stringify(input.changesEcharts)),
     versionsEcharts: JSON.parse(JSON.stringify(input.versionsEchart)),
     history_metadata: input.history_metadata,
+    options:input.options,
+    usedOptions:input.usedOptions,
+    metrics:input.metrics
   });
   var output = input.output;
   var path = input.path;

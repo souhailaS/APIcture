@@ -119,13 +119,21 @@ var ejsTemp = `
 </html>
 `;
 
-export function renderMetrics(data, path, options, format, usedOptions) {
+export function renderMetrics(
+  data,
+  path,
+  options,
+  format,
+  usedOptions,
+  oaspath
+) {
   // sort by commit_date
   data.sort((a, b) => {
     return new Date(a.commit_date) - new Date(b.commit_date);
   });
-  // save the html file
+
   fs.writeFileSync(join(path, ".previous_versions", "metrics.ejs"), ejsTemp);
+
   // ENDPOINTS METRICS
   //   if (options.endpoints || !options) {
   var option = {
@@ -514,7 +522,10 @@ export function renderMetrics(data, path, options, format, usedOptions) {
   //   }
 
   var breackingChanges = JSON.parse(
-    fs.readFileSync(join(path, ".previous_versions", ".breaking.json"), "utf8")
+    fs.readFileSync(
+      join(path, ".previous_versions", oaspath.split(".")[0], ".breaking.json"),
+      "utf8"
+    )
   );
 
   var indicators =
@@ -730,78 +741,86 @@ export function renderMetrics(data, path, options, format, usedOptions) {
     breakingChanges: option5,
     breakingMethods: option6,
   };
-if(format){
-  if (format.toLowerCase() == "svg") {
-    Object.keys(allOptions).forEach((d) => {
-      if (options[d] || !usedOptions) {
-        const chart = echarts.init(null, null, {
-          renderer: "svg", // must use SVG rendering mode
-          ssr: true, // enable SSR
-          width: 500, // need to specify height and width
-          height: 500,
-        });
+  if (format) {
+    if (format.toLowerCase() == "svg") {
+      Object.keys(allOptions).forEach((d) => {
+        if (options[d] || !usedOptions) {
+          const chart = echarts.init(null, null, {
+            renderer: "svg", // must use SVG rendering mode
+            ssr: true, // enable SSR
+            width: 500, // need to specify height and width
+            height: 500,
+          });
 
-        chart.setOption(allOptions[d]);
-        const svgStr = chart.renderToSVGString();
-        fs.writeFileSync(
-          join(path, "apivol-outputs", `metric-${d}.svg`),
-          svgStr,
-          "utf8",
-          (err) => {
-            if (err) {
-              console.error("Error saving output:", err);
-            } else {
-              console.log("Output saved as", { outputPath });
+          chart.setOption(allOptions[d]);
+          const svgStr = chart.renderToSVGString();
+          fs.writeFileSync(
+            join(path, "apivol-outputs", `metric-${d}.svg`),
+            svgStr,
+            "utf8",
+            (err) => {
+              if (err) {
+                console.error("Error saving output:", err);
+              } else {
+                console.log("Output saved as", { outputPath });
+              }
             }
-          }
-        );
-        console.log(
-          chalk.greenBright.underline.bold(
-            "|- Output Visualization saved as: " +
-              join(path, "apivol-outputs", `metric-${d}.svg`)
-          )
-        );
-        // exit process
+          );
+          console.log(
+            chalk.greenBright.underline.bold(
+              "|- Output Visualization saved as: " +
+                join(path, "apivol-outputs", `metric-${d}.svg`)
+            )
+          );
+          // exit process
 
-        // open(join(path, "..", "apivol-outputs", "sunburst.svg"));
-      }
-    });
-    process.exit(0);
-  }
+          // open(join(path, "..", "apivol-outputs", "sunburst.svg"));
+        }
+      });
+      process.exit(0);
+    }
 
     if (format.toLowerCase() == "png") {
-
-        Object.keys(allOptions).forEach((d) => {
-            if (options[d] || !usedOptions) {
-                const canvas = createCanvas(800, 800);
-                // ECharts can use the Canvas instance created by node-canvas as a container directly
-                const chart = echarts.init(canvas);
-                chart.setOption(allOptions[d]);
-                // render then  as png with good quality with high pixel density and white background
-                const buffer = canvas.toBuffer("image/png", {
-                  compressionLevel: 9,
-                  filters: canvas.PNG_FILTER_NONE,
-                  resolution: 900,
-                  background: "#ffffff",
-                });
-            
-                if (!fs.existsSync(join(path,  "apivol-outputs"))) {
-                  fs.mkdirSync(join(path,"apivol-outputs"), { recursive: true });
-                }
-                fs.writeFileSync(
-                  join(path, "apivol-outputs", "metric-" + d + ".png"),
-                  buffer
-                );
-            
-                console.log(
-                  chalk.greenBright.underline.bold(
-                    "|- Output Visualization saved as: " +
-                      join(path, "apivol-outputs", "metric-" + d + ".png")
-                  )
-                );
-            }
+      Object.keys(allOptions).forEach((d) => {
+        if (options[d] || !usedOptions) {
+          const canvas = createCanvas(800, 800);
+          // ECharts can use the Canvas instance created by node-canvas as a container directly
+          const chart = echarts.init(canvas);
+          chart.setOption(allOptions[d]);
+          // render then  as png with good quality with high pixel density and white background
+          const buffer = canvas.toBuffer("image/png", {
+            compressionLevel: 9,
+            filters: canvas.PNG_FILTER_NONE,
+            resolution: 900,
+            background: "#ffffff",
           });
-          process.exit(0);
+
+          if (!fs.existsSync(join(path, "apivol-outputs"))) {
+            fs.mkdirSync(join(path, "apivol-outputs"), { recursive: true });
+          }
+          fs.writeFileSync(
+            join(path, "apivol-outputs", "metric-" + d + ".png"),
+            buffer
+          );
+
+          console.log(
+            chalk.greenBright.underline.bold(
+              "|- Output Visualization saved as: " +
+                join(path, "apivol-outputs", "metric-" + d + ".png")
+            )
+          );
+        }
+      });
+      process.exit(0);
     }
-}
+  }
+
+  return {
+    option1: option,
+    option2,
+    option3,
+    option4,
+    option5,
+    option6,
+  };
 }

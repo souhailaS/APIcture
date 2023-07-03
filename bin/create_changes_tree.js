@@ -446,9 +446,7 @@ export async function renderTree(
      </style>
    </head>
    <body onLoad="window.scrollTo(0,170)">
-     <div class="container">
-       
-   
+     <div class="container">  
        <div class="row">
          <div class="col-md-6">
          <h3>API Meta data</h3>

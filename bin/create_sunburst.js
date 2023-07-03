@@ -632,7 +632,7 @@ function renderSunburst(
   if (!output) {
     path = join(path, "..", "..", "APIcture", oaspath.split(".")[0]);
   } else {
-    path = join(path, "..", "..", output, oaspath.split(".")[0]);
+    path = join(output, oaspath.split(".")[0]);
   }
   if (!fs.existsSync(path)) {
     fs.mkdirSync(path, { recursive: true });

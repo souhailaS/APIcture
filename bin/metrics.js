@@ -88,11 +88,11 @@ export async function computeSizeMetrics(path, oaspath) {
             ),
           ],
           parameters_per_operations:
-            parameters
+            (parameters
               .filter((p) => p)
               .reduce((acc, p) => {
                 return acc + p.length;
-              }, 0) / parameters.length,
+              }, 0) / parameters.length).toFixed(2),
           used_parameters: parameters
             .filter((p) => p)
             .reduce((acc, p) => {

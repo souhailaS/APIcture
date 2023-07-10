@@ -66,6 +66,7 @@ program
       var oasFiles = [];
 
       oasFiles = await fetchOASFiles(repoPath, options.all);
+
       var nextFile = async (i) => {
         var history_metadata = await fetchHistory(
           repoPath,
@@ -153,7 +154,11 @@ program
           return true;
         }
       };
-      await nextFile(0);
+      if (Array.isArray(oasFiles)) await nextFile(0);
+      else {
+        console.log(oasFiles);
+        await computeDiff(repoPath, oasFiles.oas_file, fast);
+      }
       return true;
 
       //
@@ -224,7 +229,7 @@ program
             return true;
           }
         };
-        await nextFile(0);
+        if (Array.isArray(oasFiles)) await nextFile(0);
       }
 
       //
@@ -289,7 +294,7 @@ program
             return true;
           }
         };
-        await nextFile(0);
+        if (Array.isArray(oasFiles)) await nextFile(0);
       }
 
       //
@@ -366,34 +371,6 @@ program
     var metrics = await computeSizeMetrics(repoPath);
     const overrAll = await computeOverallGrowthMetrics(repoPath, metrics);
     renderReport(overrAll);
-  });
-
-program
-  .command("test")
-  .description("Generate API Changes vs API Versioning Sunburst Visualization")
-  .option(
-    "-r, --repo <repo>",
-    "Path to the repository. Defaults to current working directory."
-  )
-  .option("-o, --output <path>", "Path to the output directory")
-  .option("-f, --format <format>", "Output format")
-  .option("-fs, --fast", "Fast mode")
-  .option("-a, --all", "Generate OAS for all OAS files found in the repo")
-
-  .action(async () => {
-    message();
-
-    const options = program.opts();
-    const repoPath = options.repo; //?options.repo:process.cwd();
-    const outputDir = options.output;
-    const format = options.format;
-    const filename = options.filename;
-    const fast = options.fast;
-
-    console.log(repoPath);
-    await generateOAS(repoPath);
-    console.log("OAS Generated");
-    return true;
   });
 
 program.parse(process.argv);

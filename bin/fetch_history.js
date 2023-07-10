@@ -74,15 +74,15 @@ export const fetchOASFiles = async (repoPath, all) => {
     });
 
     if (selected.value == "Yes") {
-    var {history_metadata, oasfile}= await fetchOlderVersions(repoPath, ".previous_versions");
-    console.log(versions);
-    return versions;
-    }
-    else {
+      var history_metadata = await fetchOlderVersions(
+        repoPath,
+        ".previous_versions"
+      );
+      return history_metadata;
+    } else {
       console.log("No OAS file found in the root directory of the repo");
       process.exit(0);
     }
-
   }
 
   if (!all) {
@@ -310,13 +310,12 @@ async function getPreviousVersionsOfFile(repositoryPath, filePath) {
 }
 
 async function fetchOlderVersions(repoPath, targetFolder) {
-  
-
   var gitRemote = "";
+  var remoteUrl = "";
   try {
     gitRemote = fs.readFileSync(join(repoPath, ".git", "config"), "utf8");
     gitRemote = gitRemote.split("\n");
-    var remoteUrl = "";
+    
     for (var j = 0; j < gitRemote.length; j++) {
       if (gitRemote[j].includes("url")) {
         remoteUrl = gitRemote[j].split("=")[1].trim();
@@ -340,7 +339,6 @@ async function fetchOlderVersions(repoPath, targetFolder) {
   // });
   //var hashes = commits;
   var previousVersions = [];
-
 
   var bar = new cliProgress.SingleBar(
     {
@@ -393,8 +391,8 @@ async function fetchOlderVersions(repoPath, targetFolder) {
     // run expresso
     const commitDate = await git.show(["-s", "--format=%ci", commit]);
     await runExpresso(targetRepoPath);
-   
-    if (fs.existsSync(join(targetRepoPath, "expresso-openapi.json")) ) {
+
+    if (fs.existsSync(join(targetRepoPath, "expresso-openapi.json"))) {
       var generated = JSON.parse(
         fs.readFileSync(join(targetRepoPath, "expresso-openapi.json"), "utf8")
       );
@@ -405,24 +403,25 @@ async function fetchOlderVersions(repoPath, targetFolder) {
         const previousVersion = previousVersions[i - 1];
         if (previousVersion) {
           if (
-            JSON.stringify(previousVersion.content) === JSON.stringify(generated)
+            JSON.stringify(previousVersion.content) ===
+            JSON.stringify(generated)
           ) {
             diff = false;
           }
         }
       }
       if (diff) {
-      fs.copyFileSync(
-        join(targetRepoPath, "expresso-openapi.json"),
-        join(targetRepoPath, "..", commit + ".json")
-      );
-      fs.unlinkSync(join(targetRepoPath, "expresso-openapi.json"));
-      previousVersions.push({
-        hash: commit,
-        date: commitDate,
-        content: generated,
-      });
-    }
+        fs.copyFileSync(
+          join(targetRepoPath, "expresso-openapi.json"),
+          join(targetRepoPath, "..", commit + ".json")
+        );
+        fs.unlinkSync(join(targetRepoPath, "expresso-openapi.json"));
+        previousVersions.push({
+          hash: commit,
+          date: commitDate,
+          content: generated,
+        });
+      }
     }
     fs.rmSync(join(targetRepoPath), { recursive: true });
 
@@ -451,7 +450,7 @@ async function fetchOlderVersions(repoPath, targetFolder) {
           new Date(previousVersions[0].date)) /
           (1000 * 60 * 60 * 24)
       );
-      history_metadata["git_url"] = gitRemote;
+      history_metadata["git_url"] = remoteUrl;
       history_metadata["api_titles"] = ["GENERATED OAS"];
       history_metadata["unique_versions"] = ["GENERATED OAS"];
       history_metadata["oas_file"] = "expresso-openapi.json";
@@ -460,5 +459,8 @@ async function fetchOlderVersions(repoPath, targetFolder) {
     }
   };
 
-  return {history_metadata: await nextHash(0), oasfile: "expresso-openapi.json"};
+  return {
+    history_metadata: await nextHash(0),
+    oaspath: "expresso-openapi.json",
+  };
 }

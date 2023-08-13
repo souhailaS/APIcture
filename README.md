@@ -4,7 +4,7 @@
 
 Our [paper](./accpeted_paper.pdf) is based on APIcture, a novel tool that addresses the need for comprehensive and intuitive visualization of web API evolution.
 We invite the Artifact Evaluation Committee to evaluate the practicality and effectiveness of APIcture for the reproducibility of the
-visualization we included in our paper and published in the online gallery. 
+visualization we included in our paper and published in the online gallery: https://souhailas.github.io/VISSOFT2023/
 
 ## OVERVIEW ON APICTURE
 
@@ -201,6 +201,8 @@ actively enhancing and maintaining it.
 (^2) https://github.com/openai/openai-openapi.git
 
 (^3) https://www.npmjs.com/package/expresso-api
+
+(^4) https://souhailas.github.io/VISSOFT2023/
 
 ## REFERENCES
 

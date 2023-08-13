@@ -6,6 +6,8 @@ Feedback collection: https://forms.office.com/e/PAXb73Kkes
 ## What is APIcture?
 APIcture is a command-line interface (CLI) tool designed to provide visualization support for understanding the evolution of Web APIs. It enables users to generate insightful visualizations that highlight changes, version upgrades, and metrics associated with API development and evolution. The tool is particularly useful for tracking and analyzing the history of OpenAPI specifications stored in a Git repository, but it also supports generating visualizations directly from code repositories without OpenAPI descriptions.
 
+Navigate a gallery of visualization examples in: https://souhailas.github.io/VISSOFT2023/
+
 ## How to Use APIcture?
 To use the apict tool, follow these steps:
 
@@ -20,7 +22,8 @@ To use the apict tool, follow these steps:
 
 3. Specify any additional options or flags to customize the visualization output, such as the desired format (e.g., PDF, SVG, interactive HTML).
 
-### Changes Options
+### Changes Options [changes options will be publicly released in v1.0.0]
+
 - **Details:**
 The changes subcommand offers a `--details (-d)` option, which introduces an additional level of granularity to the generated visualization. By default, the visualization provides an aggregate representation of changes at the path level, offering a comprehensive understanding of the overall change patterns across all paths. However, by utilizing the `--details` option, users can access a more fine-grained view of changes occurring at each individual path. This feature proves especially valuable when dealing with APIs characterized by an extensive history. Analyzing changes at the path level facilitates the identification of shared evolution patterns among different paths, enabling a more nuanced exploration of the API's evolution.
 
@@ -65,11 +68,7 @@ apict changes -r /path/to/git-repo
 apict versioning /path/to/git-repo
 ```
 
-![API change vs version changes](./changes-vs-versions.gif)
-
-
-
-1. Generate visualizations for API endpoints related metrics:
+3. Generate visualizations for API endpoints related metrics:
 
 ```
 apict metrics --endpoints  /path/to/git-repo

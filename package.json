@@ -1,6 +1,6 @@
 {
   "name": "apict",
-  "version": "0.0.8",
+  "version": "0.0.10",
   "description": "A CLI tool for web API evolution visualization",
   "main": "index.js",
   "private": false,

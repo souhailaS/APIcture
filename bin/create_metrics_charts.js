@@ -713,19 +713,19 @@ export function renderMetrics(
     });
 
     /// write rendered html to file
-    if (!fs.existsSync(join(path, "apivol-outputs"))) {
-      fs.mkdirSync(join(path, "apivol-outputs"), {
+    if (!fs.existsSync(join(path, "APIcture"))) {
+      fs.mkdirSync(join(path, "APIcture"), {
         recursive: true,
       });
     }
 
-    console.log(
-      "Writing metrics.html to",
-      join(path, "apivol-outputs", "metrics.html")
-    );
+    // console.log(
+    //   "Writing metrics.html to",
+    //   join(path, "APIcture", "metrics.html")
+    // );
 
     fs.writeFileSync(
-      join(path, "apivol-outputs", "metrics.html"),
+      join(path, "APIcture", "metrics.html"),
       rendered,
       (err) => {
         if (err) throw err;
@@ -755,7 +755,7 @@ export function renderMetrics(
           chart.setOption(allOptions[d]);
           const svgStr = chart.renderToSVGString();
           fs.writeFileSync(
-            join(path, "apivol-outputs", `metric-${d}.svg`),
+            join(path, "APIcture", `metric-${d}.svg`),
             svgStr,
             "utf8",
             (err) => {
@@ -769,12 +769,12 @@ export function renderMetrics(
           console.log(
             chalk.greenBright.underline.bold(
               "|- Output Visualization saved as: " +
-                join(path, "apivol-outputs", `metric-${d}.svg`)
+                join(path, "APIcture", `metric-${d}.svg`)
             )
           );
           // exit process
 
-          // open(join(path, "..", "apivol-outputs", "sunburst.svg"));
+          // open(join(path, "..", "APIcture", "sunburst.svg"));
         }
       });
       process.exit(0);
@@ -795,18 +795,18 @@ export function renderMetrics(
             background: "#ffffff",
           });
 
-          if (!fs.existsSync(join(path, "apivol-outputs"))) {
-            fs.mkdirSync(join(path, "apivol-outputs"), { recursive: true });
+          if (!fs.existsSync(join(path, "APIcture"))) {
+            fs.mkdirSync(join(path, "APIcture"), { recursive: true });
           }
           fs.writeFileSync(
-            join(path, "apivol-outputs", "metric-" + d + ".png"),
+            join(path, "APIcture", "metric-" + d + ".png"),
             buffer
           );
 
           console.log(
             chalk.greenBright.underline.bold(
               "|- Output Visualization saved as: " +
-                join(path, "apivol-outputs", "metric-" + d + ".png")
+                join(path, "APIcture", "metric-" + d + ".png")
             )
           );
         }

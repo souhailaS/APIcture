@@ -156,7 +156,7 @@ program
       };
       if (Array.isArray(oasFiles)) await nextFile(0);
       else {
-        console.log(oasFiles);
+        // console.log(oasFiles);
         await computeDiff(repoPath, oasFiles.oas_file, fast);
       }
       return true;
@@ -172,7 +172,7 @@ program
  */
 program
   .command("clock")
-  .description("Generate API Changes vs API Versioning Sunburst Visualization")
+  .description("Generate API Clock sunburst visualization")
   .option(
     "-r, --repo <repo>",
     "Path to the repository. Defaults to current working directory."
@@ -191,7 +191,7 @@ program
     const filename = options.filename;
     const fast = options.fast;
 
-    console.log(options);
+    // console.log(options);
 
     try {
       var oasFiles = [];

@@ -299,6 +299,6 @@ export async function computeSizeMetrics(path, oaspath) {
   };
 
   await next(0);
-  console.log(metrics);
+  // console.log(metrics);
   return metrics//JSON.parse(fs.readFileSync(join(path, ".metrics.json"), "utf8"));
 }

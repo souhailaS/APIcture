@@ -7,3 +7,9 @@
 
 ## [0.0.7]
 - The `apict metrics`  bug fix of when no format is specified. 
+
+## [0.0.8]
+- Changed `versions` to clock and improved the style of generated HTML. 
+
+## [0.0.10]
+- README fix

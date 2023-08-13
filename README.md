@@ -1,81 +1,222 @@
-# APIcture
+# Interactively exploring API changes and versioning consistency
+
+## Authors: SOUHAILA SERBOUT, DIANA CAROLINA MUÑOZ HURTADO, CESARE PAUTASSO
+
+Our paper is based on APIcture, a novel tool that addresses the need for comprehensive and intuitive visualization of web API evolution.
+We invite the Artifact Evaluation Committee to evaluate the practicality and effectiveness of APIcture for the reproducibility of the
+visualization we included in our paper and published in the online gallery. 
 
 
-Feedback collection: https://forms.office.com/e/PAXb73Kkes
+#### Extrnal Links:
 
-## What is APIcture?
-APIcture is a command-line interface (CLI) tool designed to provide visualization support for understanding the evolution of Web APIs. It enables users to generate insightful visualizations that highlight changes, version upgrades, and metrics associated with API development and evolution. The tool is particularly useful for tracking and analyzing the history of OpenAPI specifications stored in a Git repository, but it also supports generating visualizations directly from code repositories without OpenAPI descriptions.
+(^1) https://github.com/souhailaS/APIcture/blob/main/git_urls.json
 
-Navigate a gallery of visualization examples in: https://souhailas.github.io/VISSOFT2023/
+(^2) https://github.com/openai/openai-openapi.git
 
-## How to Use APIcture?
-To use the apict tool, follow these steps:
+(^3) https://www.npmjs.com/package/expresso-api
 
-1. Install the APIcture CLI tool using `npm install apict -g` 
+1 OVERVIEW ON APICTURE
 
-2. Run the `apict` command followed by the desired subcommand to generate the desired visualizations. The available subcommands include:
+APIcture is a comprehensive tool designed to empower researchers, developers, and users to gain deeper insights into
+the evolution of web APIs. Our submission, APIcture, introduces an innovative approach to visualizing API changes and
+versioning strategies, enabling users to comprehend the temporal sequence of changes, assess compatibility issues, and
+understand versioning practices. The tool encompasses two main visualizations: API Changes and API Version Clock.
+The former provides a detailed view of changes occurring at specific time intervals, while the latter offers an overarching
+view of version upgrades and change patterns. Our Artifact Evaluation submission presents APIcture, detailing its
+functionality, utilization, and practicality to generate API evolution visualizations. We provide clear instructions on
+how to reproduce our visualization and explore other API evolution cases.
 
-   - `apict <spec-path>`: Generates the visualizations for the OpenAPI specification located at the specified path.
+2 USAGE GUIDE
+
+2.1 Installation
+
+To start using APIcture, you need to install the CLI tool. Follow these steps:
+
+
+   * Install Node.js and npm: APIcture requires Node.js and npm (Node Package Manager) to be installed on your system. If you haven’t already installed them, you can download them from the official Node.js website: https://nodejs.org/
+      Minimum required compatible version is:v16.18.
+
+   * Install APIcture: Once you have Node.js and npm installed, open a terminal window and run the following command to install APIcture globally on your system: 
+      ```
+      npm install apict -g
+      ```
+      
+The NPM package page is in:
+https://www.npmjs.com/package/apict
+
+To be sure that APIcture is properly installed, run:
+
+`apict –version` or `apict -v`
+
+
+
+
+2.2 Basic Usage
+
+APIcture offers various subcommands that cater to different aspects of API visualization. Here are the fundamental
+steps to get started with APIcture:
+
+* **Main subcommands:** To generate the visualizations, run theapictcommand followed by the desired subcom-
+mand and any additional options to generate the desired visualizations. The available subcommands include:
+
+   - `apict <spec-path>`: Generates visualizations for the OpenAPI specification located at the specified path.
    - `apict changes <spec-path>`: Focuses specifically on changes localization.
    - `apict versioning <spec-path>`: Analyzes version upgrades versus changes types.
    - `apict metrics`: Generates visualizations for API metrics.
+* **Subcommands available options:** APIcture provides several options (Figure 1) to customize the visualization
+process according to the users needs:
+- -r, –repo <repo>: Specifies the path to the repository containing the API’s version history. By default, the tool
+uses the current working directory as the repository location.
+- -o, –output <path>: Defines the path to the output directory where the generated visualizations will be saved.
+If not specified, the output will be saved in the default directory.
+- -fs, –fast: Activates the fast mode, which optimizes the execution for faster generation of visualizations. This
+mode is only activable if the visualization has been already generated in normal mode. If not, this option is
+ignored.
+- -f, –format <format>: Specifies the desired output format for the generated visualizations. The available
+formats include options such as PNG, SVG, and interactive HTML.
+- -a, –all: Generates OpenAPI specifications for all OpenAPI files found in the repository. This option facilitates
+generating visualizations for multiple specifications within the same repository.
+- -fn, –filename <filename>: Specifies the output file name for the generated visualization. The tool saves the
+visualization with the specified file name (without file extension) in the output directory.
+- -h, –help: Displays the help information for the command, providing a concise overview of the available
+options.
 
-3. Specify any additional options or flags to customize the visualization output, such as the desired format (e.g., PDF, SVG, interactive HTML).
+![Help Subcommand](./figures-artifact/help.png)
 
-### Changes Options [changes options will be publicly released in v1.0.0]
+2.3 Reproducibility Guide
 
-- **Details:**
-The changes subcommand offers a `--details (-d)` option, which introduces an additional level of granularity to the generated visualization. By default, the visualization provides an aggregate representation of changes at the path level, offering a comprehensive understanding of the overall change patterns across all paths. However, by utilizing the `--details` option, users can access a more fine-grained view of changes occurring at each individual path. This feature proves especially valuable when dealing with APIs characterized by an extensive history. Analyzing changes at the path level facilitates the identification of shared evolution patterns among different paths, enabling a more nuanced exploration of the API's evolution.
+This section provides comprehensive instructions for generating visualizations from a real world repository using the
+commands and options listed earlier.
+For illustrative purposes, we have included sample API GitHub repositories containing OpenAPI specifications in
+our GitHub Repository^1.
 
-- **Frequency:**
-The `changes` subcommand offers an additional option, `--frequency(freq)`, which allows the user to specify the minimum frequency of changes to be visualized. As not all changes have the same occurrence rate throughout the API's history, this option enables the generation of a focused visualization that includes only changes that have occurred a specified minimum number of times. For example:
+
+Interactively exploring API changes and versioning consistency 3
+
+We pick the OpenAI API project (https://github.com/openai/openai-openapi.git) as our example. Begin by cloning the repository to your local machine:
 ```
-apict changes --frequency 100
-```
-This command will generate a changes visualization that includes only those changes that have happened at least 100 times during the API's history.
-
-#### Metrics Options
-
-When using the `apict metrics` subcommand, you have the option to select specific API size metrics that you want to visualize the evolution of over time. 
-
-There are a set of available options of the `metrics` subcommand :
-
-- `--endpoints(-e)`: Count the number of endpoints at every commit timestamp.
-- `--paths(-p)`: Count the number of paths at every commit timestamp.
-- `--breaking-changes(-bc)`: Count the frequently detected breaking changes in the API history.
-- `--methods(-m)`: Track the evolution of the usage of HTTP methods in the API over time.
-- `--breaking-methods(-bm)`: Analyze the types of API changes occurring within specific HTTP methods.
-- `--parameters(-param)`: Depict the number of parameters and parameterized operations present in the API at every commit timestamp. Also, count the number of distinct parameters used in the API for each commit.
-- `--datamodel(-d)`: Reflect the evolution of the complexity of the API's data model by counting the number of used schemas and their properties, as well as the number of distinct properties at each commit timestamp.
-
-These options allow you to choose specific API size metrics that you want to visualize the evolution of over time. Feel free to select the options that best suit your analysis needs to gain insights into the changes and growth of your Web APIs.
-
-Feel free to explore the available metrics options and adapt them to your specific needs to gain deeper insights into the evolution of your Web APIs.
-
-## Examples of Usage
-
-Here are a few examples of how to use the `apict` tool:
-
-1. Visualize the changes in an OpenAPI specification:
-   
-```
-apict changes -r /path/to/git-repo
+git clone https://github.com/openai/openai-openapi
 ```
 
-2. Analyze the version upgrades and changes types in an OpenAPI specification:
-   
+Next, navigate into the repository:
 ```
-apict versioning /path/to/git-repo
-```
-
-3. Generate visualizations for API endpoints related metrics:
-
-```
-apict metrics --endpoints  /path/to/git-repo
+cd openai-openapi
 ```
 
+Figure 2 depicts the structure of the OpenAI API repository, revealing the top-level placement of the OpenAPI
+specification file (openapi.yaml).
+
+![Repository Structure: OpenAI API](./figures-artifact/clone.png)
+
+To generate all evolution visualizations at once, simply execute:apict.
+Alternatively, utilize theapictcommand with the-roption, which will run the visualizations generation without
+need to navigate to the repository:
+
+```
+apict -r openai-openapi
+```
+
+In the absence of a specific file path, APIcture automatically locates all OpenAPI specification files within the
+repository and prompts the user to select one (Figure 3).
+
+![apict Command Line: Generating Visualizations](./figures-artifact/apict.png)
+
+To generate visualizations for all OpenAPI specifications within the repository, apply the-a [–all]option:
 
 
-These examples illustrate some of the basic functionalities of the APIcture tool. Feel free to explore the available options and adapt them to your specific needs to gain deeper insights into the evolution of your Web APIs.
+```
+apict -r openai-openapi -a
+```
 
-<!-- ## Test -->
+
+
+
+
+Generated visualizations are stored within theAPIcturefolder, organized under a directory named after the respective
+specification. For instance, in this case, the visualizations are located withinAPIcture/openapi(Figure 6). By default,
+if no format is given, the output format is HTML.
+The generated HTML files are:
+
+- changes-<openapi api file name>.html: an interactive format of the API Changes visualization.
+- version-clock-<openapi api file name>.html: an interactive format of the API Version Clock visualization.
+- version-clock-<openapi api file name>.html: an interactive format of six API evolution metrics plots
+    (Figure 4).
+
+![apict metrics visualization](./figures-artifact/metrics.png)
+
+- viz-<openapi api file name>.html: a single HTML page that includes all the previous interactive visualiza-
+    tions, in addition to a header showing history related metadata (Figure 5).
+
+
+
+
+
+
+![apict output evolution visualizations](./figures-artifact/viz.png)
+
+
+Interactively exploring API changes and versioning consistency 5
+
+
+![apict command outputs](./figures-artifact/outputs.png)
+
+
+When executing theapictcommand without specifying any additional options, it initiates the process of generating
+an evolution report directly within the terminal (Figure 7). Furthermore, for users seeking to access this report
+independently of the complete visualization generation process, the report subcommand can be employed.
+```
+apict report -r openai-openapi
+```
+
+Rather than being limited to using only the overarchingapictcommand, users have the flexibility to employ focused
+subcommands. Each of these subcommands generates a specific output individually, allowing for a more tailored
+approach to visualization creation. In addition to this, the–fastoption is provided to optimize the time taken in the
+generation process, particularly when users are exclusively interested in obtaining a particular output. This approach
+streamlines the generation time, making the process more efficient and relevant to the specific visualization needs of
+the user.
+
+
+![apict terminal prompt](./figures-artifact/report.png)
+
+2.4 Other supported cases
+
+In scenarios where no OpenAPI file is detected within the repository (Figure 8), APIcture employs a distinct approach
+for Express.js projects. It systematically generates a corresponding OpenAPI specification from the project’s codebase
+for each commit existing in the repository’s history. Subsequently, APIcture selects the specifications that exhibit
+differences from the specification of the preceding commit. This generation process leverages ExpressO[ 1 ] (https://www.npmjs.com/package/expresso-api) a CLI tool
+designed to validly generate OpenAPI specifications from expressjs code. The generated specifications are then utilized
+by APIcture to generate the intended visualizations.
+In the case where the project’s dependencies are not already installed, select(x) Nothen rerun theapictcommand.
+It is important to note that the showcased examples within our published gallery exclusively originate from projects that
+feature an accessible OpenAPI specification within the repository. In this version of APIcture, the effective generation of
+visualizations through Express.js code hinges on the capability of ExpressO to construct a specification from the underlying
+codebase.
+
+![APIcture - No OpenAPI File](./figures-artifact/noOAS.png)
+### 3 CONTACT
+
+We encourage the Artifact Evaluation Committee to reach out to the authors for any inquiries, feedback, or support
+related to the evaluation process. We are committed to providing assistance and addressing any questions that may
+arise during the evaluation.
+Issues can be also added to the public repository of APIcture: https://github.com/souhailaS/APIcture. We are currently
+actively enhancing and maintaining it.
+
+
+
+
+
+
+
+
+REFERENCES
+
+[1]Souhaila Serbout, Alessandro Romanelli, and Cesare Pautasso. Expresso: From express.js implementation code to openapi interface descriptions. In
+Thais Batista, Tomáš Bureš, Claudia Raibulet, and Henry Muccini, editors,Software Architecture. ECSA 2022 Tracks and Workshops, pages 29–44,
+Cham, 2023. Springer International Publishing. ISBN 978-3-031-36889-9.
+
+
+
+
+
+
+

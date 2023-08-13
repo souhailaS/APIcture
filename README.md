@@ -6,6 +6,9 @@ Our [paper](./accpeted_paper.pdf) is based on APIcture, a novel tool that addres
 We invite the Artifact Evaluation Committee to evaluate the practicality and effectiveness of APIcture for the reproducibility of the
 visualization we included in our paper and published in the online gallery: https://souhailas.github.io/VISSOFT2023/
 
+
+This READM.ms is also available in a better PDF readable format [here](./2023_VISSOFT_Artifact.pdf) 
+
 ## OVERVIEW ON APICTURE
 
 APIcture is a comprehensive tool designed to empower researchers, developers, and users to gain deeper insights into
@@ -145,15 +148,14 @@ The generated HTML files are:
 ![apict output evolution visualizations](./figures-artifact/viz.png)
 
 
-Interactively exploring API changes and versioning consistency 5
-
 
 ![apict command outputs](./figures-artifact/outputs.png)
 
 
-When executing theapictcommand without specifying any additional options, it initiates the process of generating
+When executing the `apict` command without specifying any additional options, it initiates the process of generating
 an evolution report directly within the terminal (Figure 7). Furthermore, for users seeking to access this report
 independently of the complete visualization generation process, the report subcommand can be employed.
+
 ```
 apict report -r openai-openapi
 ```

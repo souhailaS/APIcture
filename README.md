@@ -170,7 +170,7 @@ the user.
 
 ![apict terminal prompt](./figures-artifact/report.png)
 
-2.4 Other supported cases
+### Other supported cases
 
 In scenarios where no OpenAPI file is detected within the repository (Figure 8), APIcture employs a distinct approach
 for Express.js projects. It systematically generates a corresponding OpenAPI specification from the project’s codebase

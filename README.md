@@ -7,7 +7,7 @@ We invite the Artifact Evaluation Committee to evaluate the practicality and eff
 visualization we included in our paper and published in the online gallery: https://souhailas.github.io/VISSOFT2023/
 
 
-This READM.ms is also available in a better PDF readable format [here](./2023_VISSOFT_Artifact.pdf) 
+This READM.md is also available in a better PDF readable format [here](./2023_VISSOFT_Artifact.pdf) 
 
 ## OVERVIEW ON APICTURE
 

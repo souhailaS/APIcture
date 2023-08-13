@@ -11,4 +11,6 @@ The visualizations are obtained by analyzing git repositories, which need to be 
 
 The visualization output is in HTML format. A compatible Web browser is required to display it.
 
-The tool has been tested on MacOS Version 12.6. The visualizations in the paper require at least 8 GB of RAM to be computed. 
+The tool has been tested on MacOS Version 12.6. and 13.3.
+
+The visualizations in the paper require at least 8GB of RAM to be computed. 

@@ -1,21 +1,12 @@
 # Interactively exploring API changes and versioning consistency
 
-## Authors: SOUHAILA SERBOUT, DIANA CAROLINA MUÑOZ HURTADO, CESARE PAUTASSO
+### Authors: SOUHAILA SERBOUT, DIANA CAROLINA MUÑOZ HURTADO, CESARE PAUTASSO
 
-Our paper is based on APIcture, a novel tool that addresses the need for comprehensive and intuitive visualization of web API evolution.
+Our [paper](./accepted-paper.pdf) is based on APIcture, a novel tool that addresses the need for comprehensive and intuitive visualization of web API evolution.
 We invite the Artifact Evaluation Committee to evaluate the practicality and effectiveness of APIcture for the reproducibility of the
 visualization we included in our paper and published in the online gallery. 
 
-
-#### Extrnal Links:
-
-(^1) https://github.com/souhailaS/APIcture/blob/main/git_urls.json
-
-(^2) https://github.com/openai/openai-openapi.git
-
-(^3) https://www.npmjs.com/package/expresso-api
-
-1 OVERVIEW ON APICTURE
+## OVERVIEW ON APICTURE
 
 APIcture is a comprehensive tool designed to empower researchers, developers, and users to gain deeper insights into
 the evolution of web APIs. Our submission, APIcture, introduces an innovative approach to visualizing API changes and
@@ -26,9 +17,9 @@ view of version upgrades and change patterns. Our Artifact Evaluation submission
 functionality, utilization, and practicality to generate API evolution visualizations. We provide clear instructions on
 how to reproduce our visualization and explore other API evolution cases.
 
-2 USAGE GUIDE
+## USAGE GUIDE
 
-2.1 Installation
+### Installation
 
 To start using APIcture, you need to install the CLI tool. Follow these steps:
 
@@ -51,7 +42,7 @@ To be sure that APIcture is properly installed, run:
 
 
 
-2.2 Basic Usage
+### Basic Usage
 
 APIcture offers various subcommands that cater to different aspects of API visualization. Here are the fundamental
 steps to get started with APIcture:
@@ -83,17 +74,16 @@ options.
 
 ![Help Subcommand](./figures-artifact/help.png)
 
-2.3 Reproducibility Guide
+### Reproducibility Guide
 
 This section provides comprehensive instructions for generating visualizations from a real world repository using the
 commands and options listed earlier.
 For illustrative purposes, we have included sample API GitHub repositories containing OpenAPI specifications in
-our GitHub Repository^1.
+our GitHub Repository (https://github.com/souhailaS/APIcture/blob/main/git_urls.json).
 
-
-Interactively exploring API changes and versioning consistency 3
 
 We pick the OpenAI API project (https://github.com/openai/openai-openapi.git) as our example. Begin by cloning the repository to your local machine:
+
 ```
 git clone https://github.com/openai/openai-openapi
 ```
@@ -193,7 +183,8 @@ visualizations through Express.js code hinges on the capability of ExpressO to c
 codebase.
 
 ![APIcture - No OpenAPI File](./figures-artifact/noOAS.png)
-### 3 CONTACT
+
+## CONTACT
 
 We encourage the Artifact Evaluation Committee to reach out to the authors for any inquiries, feedback, or support
 related to the evaluation process. We are committed to providing assistance and addressing any questions that may
@@ -203,12 +194,15 @@ actively enhancing and maintaining it.
 
 
 
+## Extrnal Links
 
+(^1) https://github.com/souhailaS/APIcture/blob/main/git_urls.json
 
+(^2) https://github.com/openai/openai-openapi.git
 
+(^3) https://www.npmjs.com/package/expresso-api
 
-
-REFERENCES
+## REFERENCES
 
 [1]Souhaila Serbout, Alessandro Romanelli, and Cesare Pautasso. Expresso: From express.js implementation code to openapi interface descriptions. In
 Thais Batista, Tomáš Bureš, Claudia Raibulet, and Henry Muccini, editors,Software Architecture. ECSA 2022 Tracks and Workshops, pages 29–44,

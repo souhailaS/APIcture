@@ -13,4 +13,4 @@ The visualization output is in HTML format. A compatible Web browser is required
 
 The tool has been tested on MacOS Version 12.6. and 13.3.
 
-The visualizations in the paper require at least 8GB of RAM to be computed. 
+The visualizations in the paper require the default node.js memory allocation of at least 4GB of RAM to be computed. 

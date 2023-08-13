@@ -31,6 +31,8 @@ import { renderAllCharts } from "../render_all_viz.js";
 import chalk from "chalk";
 import { join } from "path";
 import { generateOAS } from "../oasgen/oasgen.js";
+// import packageJson from "../../package.json";
+import packageJson from "../../package.json" assert { type: "json" };
 
 /**
  * If no parameter is passed generate both the version clock and changes visualizations
@@ -41,20 +43,32 @@ program
     "-r, --repo <repo>",
     "Path to the repository. Defaults to current working directory."
   )
+  
   .option("-o, --output <path>", "Path to the output directory")
-  .option("-freq, --frequency <frequency>", "Minimum frequency of changes")
+  // .option("-freq, --frequency <frequency>", "Minimum frequency of changes")
   .option("-fs, --fast", "Fast mode")
   .option("-f, --format <format>", "Output format")
   .option("-a, --all", "Generate OAS for all OAS files found in the repo")
-  .option("-d, --details", "Show details")
+  // .option("-d, --details", "Show details")
   // file name for the output file
   .option(
     "-fn, --filename <filename>",
     "Output file name [Without file extension]"
   )
+  // add version option
+  .option("-v, --version", "Output the current version")
 
   .action(async () => {
     message();
+   
+    // output the current version
+    if (program.opts().version) {
+  
+      console.log(packageJson.version);
+
+      return;
+    }
+
     const options = program.opts();
     const repoPath = options.repo || process.cwd();
     const outputDir = options.output;

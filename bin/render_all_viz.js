@@ -166,60 +166,7 @@ const HTML = `<!DOCTYPE html>
       });
 
 
-      // render metrics
-      if(<%=options.endpoints%> || <%=!usedOptions%>){
-        var myChart1 = echarts.init(document.getElementById("metrics-echart"));
-        var chartOptions1 = <%-JSON.stringify(JSON.parse(JSON.stringify(metrics.option1))) %>;
-        myChart1.setOption(chartOptions1); 
-        window.addEventListener('resize', function() {
-          myChart1.resize();
-        });  
-        }
-
-      
-        if(<%=options.parameters%> || <%=!usedOptions%>){
-        var myChart2 = echarts.init(document.getElementById("parameters-echart"));
-        var chartOptions2 = <%-JSON.stringify(JSON.parse(JSON.stringify(metrics.option2))) %>;
-        myChart2.setOption(chartOptions2);
-        window.addEventListener('resize', function() {
-            myChart2.resize();
-            });
-        }
-        myChart2.setOption(chartOptions2);
-
-        if(<%=options.methods%> || <%=!usedOptions%>){
-        var myChart3 = echarts.init(document.getElementById("methods-echart"));
-        var chartOptions3 = <%-JSON.stringify(JSON.parse(JSON.stringify(metrics.option3))) %>;
-        myChart3.setOption(chartOptions3);
-        window.addEventListener('resize', function() {
-            myChart3.resize();
-            });
-        }
-
-        if(<%=options.datamodel%> || <%=!usedOptions%>){
-        var myChart4 = echarts.init(document.getElementById("schema-echart"));
-        var chartOptions4 = <%-JSON.stringify(JSON.parse(JSON.stringify(metrics.option4))) %>;
-        myChart4.setOption(chartOptions4);
-        window.addEventListener('resize', function() {
-            myChart4.resize();
-            });
-        }
-        if(<%=options.breakingChanges%>|| <%=!usedOptions%>){
-        var myChart5 = echarts.init(document.getElementById("radar-echart"));
-        var chartOptions5 = <%-JSON.stringify(JSON.parse(JSON.stringify(metrics.option5))) %>;
-        myChart5.setOption(chartOptions5);
-        window.addEventListener('resize', function() {
-            myChart5.resize();
-            });
-        }
-        if(<%=options.breakingMethods%> || <%=!usedOptions%>){
-        var myChart6 = echarts.init(document.getElementById("methods-breaking"));
-        var chartOptions6 = <%-JSON.stringify(JSON.parse(JSON.stringify(metrics.option6))) %>;
-        myChart6.setOption(chartOptions6);
-        window.addEventListener('resize', function() {
-            myChart6.resize();
-            });
-        }
+     
     </script>
   </body>
 </html>
@@ -230,16 +177,17 @@ export function renderAllCharts(input) {
     changesEcharts: JSON.parse(JSON.stringify(input.changesEcharts)),
     versionsEcharts: JSON.parse(JSON.stringify(input.versionsEchart)),
     history_metadata: input.history_metadata,
-    options:input.options,
+    options:input.options || {},
     usedOptions:input.usedOptions,
     metrics:input.metrics
   });
   var output = input.output;
   var path = input.path;
   if (!output) {
-    path = join(path, "APIcture", input.oaspath);
+    path = join(path, "APIcture", input.history_metadata.oas_file);
   } else {
-    path = join(output, input.oaspath);
+
+    path = join(output)//, input.history_metadata.oas_file);
   }
   if (!fs.existsSync(path)) {
     fs.mkdirSync(path, { recursive: true });

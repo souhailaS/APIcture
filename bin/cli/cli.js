@@ -31,8 +31,9 @@ import { renderAllCharts } from "../render_all_viz.js";
 import chalk from "chalk";
 import { join } from "path";
 import { generateOAS } from "../oasgen/oasgen.js";
+import vissoft from "../../vissoft/vissoft.js";
 // import packageJson from "../../package.json";
-import packageJson from "../../package.json" assert { type: "json" };
+// import packageJson from "../../package.json" assert { type: "json" };
 
 /**
  * If no parameter is passed generate both the version clock and changes visualizations
@@ -64,7 +65,7 @@ program
     // output the current version
     if (program.opts().version) {
   
-      console.log(packageJson.version);
+      // console.log(packageJson.version);
 
       return;
     }
@@ -385,6 +386,23 @@ program
     var metrics = await computeSizeMetrics(repoPath);
     const overrAll = await computeOverallGrowthMetrics(repoPath, metrics);
     renderReport(overrAll);
+  });
+
+
+
+
+
+
+/**
+ * Generate the vissorft gallery
+ */
+program
+  .command("vissoft")
+  .description("Generate the gallery appended to vissoft 2023 paper")
+  .action(async () => {
+    message();
+    await vissoft();
+   
   });
 
 program.parse(process.argv);

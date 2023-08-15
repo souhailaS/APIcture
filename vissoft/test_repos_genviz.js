@@ -86,7 +86,7 @@ export default async function generateGallery(path) {
     // if there are processed projects ask if the user wants to process from the scratch of continue
     if (processed.length > 0) {
       var answer = await getUserInput(
-        `The script has already processed ${processed.length} projects. Do you want to continue from the scratch? (y/n): `
+        `The script has already processed ${processed.length} projects. Do you want to restart from the scratch? (y/n): `
       );
 
       if (answer.toLowerCase() === "y" || answer.toLowerCase() === "yes") {

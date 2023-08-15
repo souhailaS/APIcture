@@ -8,6 +8,9 @@ import { promisify } from "util";
 import { exec } from "child_process";
 import readline from "readline";
 
+import git_urls from "./git_urls.json" assert { type: "json" };
+
+
 export default async function clone() {
   // console log that the script is running and will start by cloning the repos
   console.log(
@@ -31,10 +34,28 @@ export default async function clone() {
     });
   }
 
-  var repoUrlsPath = await getUserInput( 
+  var repoUrlsPath = await getUserInput(
     "Enter the path to the JSON file containing the array of Git URLs: "
   );
   //"./local/git_urls.json"; // Path to the JSON file containing the array of Git URLs
+  var repoUrls = [];
+
+  try {
+    const rawData = await fs.promises.readFile(repoUrlsPath);
+    repoUrls = JSON.parse(rawData);
+  } catch (error) {
+    if (repoUrlsPath == "") {
+      console.error(
+        "No path to the JSON file containing the array of Git URLs was provided. Defaulting to the git_urls.json file."
+      );
+    } else {
+      console.error(
+        "Error reading the JSON file. Defaulting to the git_urls.json file."
+      );
+    }
+    repoUrls = git_urls;
+    // rl.close();
+  }
 
   var cloneFolder = await getUserInput("Enter the destination folder path: ");
 
@@ -44,7 +65,7 @@ export default async function clone() {
 
   console.log(
     chalk.bold(
-      `|-- The script will clone the repositories listed in ${repoUrlsPath} into ${cloneFolder}`
+      `|-- The script will clone the repositories  into ${cloneFolder}`
     )
   );
 
@@ -85,7 +106,7 @@ export default async function clone() {
             `|-- The folder ${cloneFolder} is empty. The script will clone the repositories`
           )
         );
-        await cloneRepositories();
+        await cloneRepositories(repoUrls);
       }
     }
   }
@@ -94,16 +115,14 @@ export default async function clone() {
   if (!fs.existsSync(cloneFolder)) {
     // console.log(`\nCreating ${cloneFolder} folder.`);
     fs.mkdirSync(cloneFolder);
-    await cloneRepositories();
+    await cloneRepositories(repoUrls);
   } else {
     await askToDeleteAndClone();
   }
 
-  async function cloneRepositories() {
+  async function cloneRepositories(repoUrls) {
     try {
       // Read the JSON file containing the repo URLs
-      const rawData = await fs.promises.readFile(repoUrlsPath);
-      const repoUrls = JSON.parse(rawData);
 
       const totalRepos = repoUrls.length;
       let clonedCount = 0;
@@ -146,7 +165,6 @@ export default async function clone() {
     }
 
     rl.close();
-  
   }
 
   return cloneFolder;

@@ -42,6 +42,36 @@ To be sure that APIcture is properly installed, run:
 
 `apict –version` or `apict -v`
 
+### Reproducing the visualizations in the VISSOFT paper
+
+To facilitate the reproducibility of the visualizations showcased in the public gallery, we have introduced a temporary command that streamlines the generation of all visualizations in a single run:
+
+`apict vissoft`
+
+By executing this command, APIcture automatically clones a predefined list of GitHub repository URLs, thoughtfully provided within the APIcture repository. It is important to note that an active internet connection is required to retrieve these Git repositories from GitHub. The command subsequently generates visualizations for all the cloned repositories, and as an added benefit, it creates an index.html page. This page serves as a convenient navigation hub, allowing users to seamlessly explore and access all the generated visualizations in a coherent manner.
+
+
+When utilizing the command apict vissoft, users will initially be prompted to provide  the path from: https://github.com/souhailaS/APIcture/blob/main/git_urls.json JSON file containing the URLs of the repositories to clone and a destination folder path where the repositories will be cloned from: https://github.com/souhailaS/APIcture/blob/main/git\_urls.json 
+
+
+*If no path of the JSON file containing the URLs of the repositories to clone is given or the inserted path is invalid, it will be defaulted to the git_urls.json included in APIcture's repository.  In case the user opts not to input any path, the current location will automatically be designated as the destination folder for the cloned repositories*
+
+ If the specified destination folder does not exist, the tool will automatically create it. The repositories are then cloned one after the other showing in the console the state of the cloning phase.
+
+
+ On the other hand, if the folder already exists, the user will be prompted to decide whether they want to completely recreate the folder from scratch and subsequently clone all the repositories into it. If the user chooses not to recreate the folder from scratch, the system will provide information about the number of repositories present within that folder. Following this, the generation of visualizations for the existing APIs in the folder will commence. In scenarios where no repositories are present in the designated folder, the tool will proceed to clone the repositories before initiating the process of visualization generation.
+
+
+Upon completion of the cloning process, the user will be prompted to specify a path for the destination folder where the resulting visualizations will be stored. In the event that no path is provided, the current directory will be regarded as the destination. 
+
+Subsequently, a directory named VISSOFT will be established within the designated destination folder. This directory will accommodate the entire collection of generated artifacts. These artifacts encompass individual visualizations for each API, accompanied by an index.html file. The latter functions as a navigational interface, enabling access to each of the generated visualizations.
+
+To generate the outputs APIcture systematically parses all files within the projects with the extensions .yaml or .json, and subsequently assesses whether these files conform to the OpenAPI specification. Upon detecting valid OpenAPI files, the tool proceeds to retrieve their complete version histories. Subsequently, APIcture initiates the generation of visualizations for each identified OpenAPI file, following the comprehensive procedure delineated.
+
+It is important to note that a single repository might contain OpenAPI files pertaining to multiple APIs. To effectively handle this scenario, APIcture structurally organizes the generated outputs, considering both the repository's name and the name of the respective OpenAPI file. 
+
+In the event that the script is terminated during the visualization generation phase and is subsequently restarted, the user will be presented with the choice of either resuming visualization generation for projects that were not previously processed or reinitiating the entire procedure. It is noteworthy that this phase does not necessitate an internet connection. The repositories history is locally fetched from git history.
+
 
 
 

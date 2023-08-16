@@ -84,7 +84,7 @@ export default async function clone() {
       try {
         await fs.promises.rm(cloneFolder, { recursive: true });
         console.log(`\nDeleted existing ${cloneFolder} folder.`);
-        await cloneRepositories();
+        await cloneRepositories(repoUrls);
       } catch (error) {
         console.error("Error deleting the folder:", error);
         rl.close();

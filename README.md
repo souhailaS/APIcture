@@ -33,17 +33,21 @@ To start using APIcture, you need to install the CLI tool. Follow these steps:
    * Install Node.js and npm: APIcture requires Node.js and npm (Node Package Manager) to be installed on your system. If you haven’t already installed them, you can download them from the official Node.js website: https://nodejs.org/
       Minimum required compatible version is:v16.18.
 
-   * Install APIcture: Once you have Node.js and npm installed, open a terminal window and run the following command to install APIcture globally on your system: 
-      ```
-      npm install apict -g
-      ```
-      
-Make sure to add the `-g` to install the module. To function correctly APIcture needs to be installed as a global module. The NPM package page is in:
-https://www.npmjs.com/package/apict
+   * Install APIcture: Once you have Node.js and npm installed. You can download APIcture repository from Zenodo: https://zenodo.org/record/8253385  or clone the repository from GitHub: https://github.com/souhailaS/APIcture.
 
-To be sure that APIcture is properly installed, run:
+Once downloaded navigate to the root of the repository and download dependencies by running: `npm install`
 
-`apict –-version` or `apict -v`
+Once finished, install the current APIcture package by running: 
+```
+npm install . -g
+```
+
+**Alternative.** Since APIcture is also released on NPM (https://www.npmjs.com/package/apict), it is possible to install it without need to manually download the source code.  
+Open a terminal window and run the following command to install APIcture globally on your system: `npm install apict -g`
+
+Make sure to add the `-g` to install it as a global module. 
+
+To be sure that APIcture is properly installed, run: `apict -v` of `apict --version` this should display the current version of the artifact. 
 
 ### Reproducing the visualizations in the VISSOFT paper
 

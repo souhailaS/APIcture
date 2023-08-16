@@ -1,3 +1,4 @@
+
 # Interactively exploring API changes and versioning consistency
 
 ### Authors: SOUHAILA SERBOUT, DIANA CAROLINA MUÑOZ HURTADO, CESARE PAUTASSO
@@ -249,10 +250,6 @@ actively enhancing and maintaining it.
 [1]Souhaila Serbout, Alessandro Romanelli, and Cesare Pautasso. Expresso: From express.js implementation code to openapi interface descriptions. In
 Thais Batista, Tomáš Bureš, Claudia Raibulet, and Henry Muccini, editors,Software Architecture. ECSA 2022 Tracks and Workshops, pages 29–44,
 Cham, 2023. Springer International Publishing. ISBN 978-3-031-36889-9.
-
-
-
-
 
 
 

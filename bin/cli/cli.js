@@ -1,4 +1,5 @@
-#!/usr/bin/env node
+#!/usr/bin/env node --no-warnings
+
 /**
  * This script uses commander to create the CLI tool for generating Evolution visualizations.
  * The CLI tool can be used to generate visualizations for a given repository.
@@ -31,6 +32,7 @@ import { renderAllCharts } from "../render_all_viz.js";
 import chalk from "chalk";
 import { join } from "path";
 import { generateOAS } from "../oasgen/oasgen.js";
+import vissoft from "../../vissoft/vissoft.js";
 // import packageJson from "../../package.json";
 import packageJson from "../../package.json" assert { type: "json" };
 
@@ -63,9 +65,7 @@ program
    
     // output the current version
     if (program.opts().version) {
-  
-      console.log(packageJson.version);
-
+       console.log("VERSION: ",packageJson.version);
       return;
     }
 
@@ -385,6 +385,26 @@ program
     var metrics = await computeSizeMetrics(repoPath);
     const overrAll = await computeOverallGrowthMetrics(repoPath, metrics);
     renderReport(overrAll);
+  });
+
+
+
+
+
+
+/**
+ * Generate the vissorft gallery
+ */
+program
+  .command("vissoft")
+  .description("Generate the gallery appended to vissoft 2023 paper.")
+  .action(async () => {
+    message();
+    console.log("The gallery visualizations generation starts by downloading the \nrepositories from GitHub, then generating the visualizations.\n This process may take a while.");
+    console.log("> If no URLs JSON file is provided or an invalid JSON is provided,\nthe default git_urls.json file included in the projects is used.");
+    console.log("> If no destination folder is provided, the current is used.");
+    console.log("")
+    await vissoft();
   });
 
 program.parse(process.argv);

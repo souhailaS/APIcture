@@ -77,12 +77,12 @@ program
     const fast = options.fast || false;
 
     try {
-      var oasFiles = [];
+      let oasFiles = [];
 
       oasFiles = await fetchOASFiles(repoPath, options.all);
 
-      var nextFile = async (i) => {
-        var history_metadata = await fetchHistory(
+      let nextFile = async (i) => {
+        let history_metadata = await fetchHistory(
           repoPath,
           oasFiles[i].oaspath
         );

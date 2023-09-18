@@ -29,41 +29,39 @@ export const fetchOASFiles = async (repoPath, all) => {
 
   const yamlJson = openapiFiles.map(async (file) => {
     try {
-      // if(all)
-      // repoPath = join(repoPath,file.split(".")[0], file)
-
-      var oas = await SwaggerParser.validate(join(repoPath, file));
+      let oas = await SwaggerParser.parse(join(repoPath, file));
       return { oaspath: join(file), oas: oas };
     } catch (err) {
       console.log(
         "|- " + chalk.red("Error") + " in parsing " + chalk.underline(file) //+
         // " : " +
         // err.message
+     
       );
       return false;
     }
   });
 
-  var validOAS = await Promise.all(yamlJson);
+  let validOAS = await Promise.all(yamlJson);
   validOAS = validOAS.filter((oas) => oas !== false);
 
   console.log(
     "|- " +
       validOAS.length +
-      " OAS files found in the root directory of the repo"
+      " parsable OAS files found in the root directory of the repo"
   );
 
   // use cli-select to select the oas file to use
   // if no OAS file is found in the root directory of the repo throw an exception
   if (validOAS.length === 0) {
     // code 100
-    var err = new Error("No OAS file found in the root directory of the repo");
+    let err = new Error("No OAS file found in the root directory of the repo");
     err.code = "NoOASFileFound";
     err.name = "NoOASFileFound";
     // throw err;
     // console.log(err);
     console.log(`Generate a OAS files from repository history? (y/n)`);
-    var selected = await cliselect({
+    let selected = await cliselect({
       values: ["Yes", "No"],
       valueRenderer: (value, selected) => {
         if (selected) {
@@ -74,7 +72,7 @@ export const fetchOASFiles = async (repoPath, all) => {
     });
 
     if (selected.value == "Yes") {
-      var history_metadata = await fetchOlderVersions(
+      let history_metadata = await fetchOlderVersions(
         repoPath,
         ".previous_versions"
       );
@@ -86,7 +84,7 @@ export const fetchOASFiles = async (repoPath, all) => {
   }
 
   if (!all) {
-    var selected = await cliselect({
+    let selected = await cliselect({
       values: validOAS.map((oas) => oas.oaspath),
       valueRenderer: (value, selected) => {
         if (selected) {
@@ -102,12 +100,13 @@ export const fetchOASFiles = async (repoPath, all) => {
 };
 
 export const fetchHistory = async (repoPath, oaspath) => {
-  var gitRemote = "";
+  let gitRemote = "";
+  let remoteUrl = "";
   try {
     gitRemote = fs.readFileSync(join(repoPath, ".git", "config"), "utf8");
     gitRemote = gitRemote.split("\n");
-    var remoteUrl = "";
-    for (var j = 0; j < gitRemote.length; j++) {
+    
+    for (let j = 0; j < gitRemote.length; j++) {
       if (gitRemote[j].includes("url")) {
         remoteUrl = gitRemote[j].split("=")[1].trim();
       }
@@ -116,11 +115,11 @@ export const fetchHistory = async (repoPath, oaspath) => {
     console.log("No remote url found");
   }
 
-  var history_metadata = {};
+  let history_metadata = {};
 
-  var previousVersions = await getPreviousVersionsOfFile(repoPath, oaspath);
+  let previousVersions = await getPreviousVersionsOfFile(repoPath, oaspath);
 
-  var data = previousVersions.map((version) => {
+  let data = previousVersions.map((version) => {
     return {
       commit_date: new Date(version.date),
       hash: version.hash,
@@ -146,13 +145,13 @@ export const fetchHistory = async (repoPath, oaspath) => {
     ),
     JSON.stringify(data)
   );
-  var invalidFiles = [];
-  var apiTitles = [];
-  var apiVersions = [];
-  var uniqueVersion = [];
+  let invalidFiles = [];
+  let apiTitles = [];
+  let apiVersions = [];
+  let uniqueVersion = [];
 
-  var nextVersion = async (i) => {
-    var version = previousVersions[i];
+  let nextVersion = async (i) => {
+    let version = previousVersions[i];
 
     // console.log(version)
 
@@ -175,7 +174,7 @@ export const fetchHistory = async (repoPath, oaspath) => {
         )
       );
 
-      var title = {
+      let title = {
         title: oas.info?.title,
         commit_date: version.date,
         hash: version.hash,
@@ -185,7 +184,7 @@ export const fetchHistory = async (repoPath, oaspath) => {
       if (apiTitles.length == 0) apiTitles.push(title);
       else if (apiTitles[apiTitles.length - 1].title !== title.title)
         apiTitles.push(title);
-      var api_version = {
+      let api_version = {
         hash: version.hash,
         commit_date: version.date,
         version: oas.info?.version,
@@ -279,7 +278,7 @@ async function getPreviousVersionsOfFile(repositoryPath, filePath) {
   // console.log(log);
   const commits = log.all[0].hash.split("\n");
 
-  var hashes = commits.filter((commit, index) => {
+  let hashes = commits.filter((commit, index) => {
     return index % 3 === 0;
   });
 
@@ -310,13 +309,13 @@ async function getPreviousVersionsOfFile(repositoryPath, filePath) {
 }
 
 async function fetchOlderVersions(repoPath, targetFolder) {
-  var gitRemote = "";
-  var remoteUrl = "";
+  let gitRemote = "";
+  let remoteUrl = "";
   try {
     gitRemote = fs.readFileSync(join(repoPath, ".git", "config"), "utf8");
     gitRemote = gitRemote.split("\n");
-    
-    for (var j = 0; j < gitRemote.length; j++) {
+
+    for (let j = 0; j < gitRemote.length; j++) {
       if (gitRemote[j].includes("url")) {
         remoteUrl = gitRemote[j].split("=")[1].trim();
       }
@@ -332,15 +331,15 @@ async function fetchOlderVersions(repoPath, targetFolder) {
 
   const logOptions = ["--pretty=format:%H", "--reverse"];
 
-  var log = await git.log(logOptions);
+  let log = await git.log(logOptions);
   const hashes = log.all[0].hash.split("\n");
-  // var hashes = commits.filter((commit, index) => {
+  // let hashes = commits.filter((commit, index) => {
   //   return index % 3 === 0;
   // });
-  //var hashes = commits;
-  var previousVersions = [];
+  //let hashes = commits;
+  let previousVersions = [];
 
-  var bar = new cliProgress.SingleBar(
+  let bar = new cliProgress.SingleBar(
     {
       format:
         "|- Generating OAS - " +
@@ -357,11 +356,11 @@ async function fetchOlderVersions(repoPath, targetFolder) {
   bar.start(hashes.length - 1, 0, {
     speed: "N/A",
   });
-  var nextHash = async (i) => {
+  let nextHash = async (i) => {
     bar.update(i, {
       speed: "N/A",
     });
-    var commit = hashes[i];
+    let commit = hashes[i];
     const targetRepoPath = join(
       repoPath,
       targetFolder,
@@ -393,10 +392,10 @@ async function fetchOlderVersions(repoPath, targetFolder) {
     await runExpresso(targetRepoPath);
 
     if (fs.existsSync(join(targetRepoPath, "expresso-openapi.json"))) {
-      var generated = JSON.parse(
+      let generated = JSON.parse(
         fs.readFileSync(join(targetRepoPath, "expresso-openapi.json"), "utf8")
       );
-      var diff = true;
+      let diff = true;
       // compare the generated file with the previous version i-1 in case of i > 0
       // in case it is not different set diff = false
       if (i > 0) {
@@ -440,7 +439,7 @@ async function fetchOlderVersions(repoPath, targetFolder) {
         JSON.stringify(previousVersions)
       );
 
-      var history_metadata = {};
+      let history_metadata = {};
       history_metadata["first_commit"] = previousVersions[0].date;
       history_metadata["last_commit"] =
         previousVersions[previousVersions.length - 1].date;

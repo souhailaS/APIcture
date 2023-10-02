@@ -3,26 +3,26 @@ import { exec } from "child_process";
 import { join } from "path";
 
 
-
 if (!fs.existsSync(join("bin/test", "repos"))) {
   console.log("creating repos folder");
   fs.mkdirSync(join("bin/test", "repos"), { recursive: true });
 
 }
 
-// if (
-//   !fs.existsSync(
-//     join("bin/test",  "repos_url_express_cloned.json")
-//   )
-// ) {
-//   console.log("creating repos_url_express_cloned.json");
+if (
+  !fs.existsSync(
+    join("bin/test", "repos_url_express_cloned.json")
+  )
+) {
+  console.log("creating repos_url_express_cloned.json");
 
-fs.writeFileSync(
-  join("bin/test", "repos_url_express_cloned.json"),
-  JSON.stringify([]),
-  "utf8"
-);
-// }
+  fs.writeFileSync(
+    join("bin/test", "repos_url_express_cloned.json"),
+    JSON.stringify([]),
+    "utf8"
+  );
+}
+
 
 console.log(join("bin/test", "repos_url_express.json"));
 var repos_url_express = JSON.parse(
@@ -76,15 +76,13 @@ var next = async (i, r) => {
 
           if (fs.existsSync(join("bin/test", "repos", owner))) {
             exec(
-              `cd ${"bin/test"}/output/repos/${owner}/${
-                repo_url.split("/")[repo_url.split("/").length - 1]
+              `cd ${"bin/test"}/output/repos/${owner}/${repo_url.split("/")[repo_url.split("/").length - 1]
               } && git rev-list --count HEAD`,
               (err, stdout, stderr) => {
                 if (err) {
                   console.log("Error getting number of commits");
                   console.log(
-                    `cd ${"bin/test"}/output/repos/${owner}/${
-                      repo_url.split("/")[repo_url.split("/").length - 1]
+                    `cd ${"bin/test"}/output/repos/${owner}/${repo_url.split("/")[repo_url.split("/").length - 1]
                     } && git rev-list --count HEAD`
                   );
                   //console.log(err);
@@ -108,15 +106,15 @@ var next = async (i, r) => {
                 fs.writeFileSync(
                   join(
                     "bin/test",
-                   
+
                     "/repos_url_express_cloned.json"
                   ),
                   JSON.stringify(repos_url_express_cloned),
                   "utf8"
                 );
 
-               
-                
+
+
               }
             );
           } else {

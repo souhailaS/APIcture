@@ -8,7 +8,6 @@ if (!fs.existsSync(join("bin/test", "repos"))) {
   fs.mkdirSync(join("bin/test", "repos"), { recursive: true });
 
 }
-
 if (
   !fs.existsSync(
     join("bin/test", "repos_url_express_cloned.json")
@@ -22,7 +21,6 @@ if (
     "utf8"
   );
 }
-
 
 console.log(join("bin/test", "repos_url_express.json"));
 var repos_url_express = JSON.parse(
@@ -56,9 +54,6 @@ var next = async (i, r) => {
       } else {
         console.log(`cloned ${repo_url}`);
         if (!repos_url_express_cloned.includes(repo_url)) {
-          // get number of commits on the repo
-
-          // wait 5 seconds to get the number of commits
           setTimeout(() => {
             console.log("waiting 5 (s) for the repo to be cloned");
           }, 5000);
@@ -112,9 +107,6 @@ var next = async (i, r) => {
                   JSON.stringify(repos_url_express_cloned),
                   "utf8"
                 );
-
-
-
               }
             );
           } else {

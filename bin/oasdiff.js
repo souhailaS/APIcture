@@ -18,19 +18,22 @@ import chalk from "chalk";
 import cliProgress from "cli-progress";
 import colors from "ansi-colors";
 
-import yaml_to_json from "js-yaml";
 
-export async function computeDiff(path, oaspath, isFast) {
+export async function compute_diff(path, oaspath, isFast) {
+  let diffs_file = fs.existsSync(
+    join(path, ".previous_versions", oaspath.split(".")[0], ".diffs.json")
+  )
+
   if (
     !isFast ||
     (isFast &&
-      !fs.existsSync(
-        join(path, ".previous_versions", oaspath.split(".")[0], ".diffs.json")
-      ))
+      !diffs_file)
   ) {
     path = join(path, ".previous_versions", oaspath.split(".")[0]);
-    var api_commits = fs.readFileSync(join(path, ".api_commits.json"));
+    let api_commits = fs.readFileSync(join(path, ".api_commits.json"));
     api_commits = JSON.parse(api_commits);
+
+    // initialize diffs file
     fs.writeFileSync(
       join(path, ".diffs.json"),
       JSON.stringify([
@@ -41,51 +44,11 @@ export async function computeDiff(path, oaspath, isFast) {
         },
       ])
     );
-
-    // {
-    //   hash: api_commits[i].hash,
-    //   diff: stdout,
-    //   commit_date: api_commits[i].commit_date,
-    // })
-
     fs.writeFileSync(join(path, ".breaking.json"), JSON.stringify([]));
     fs.writeFileSync(join(path, ".non-breaking.json"), JSON.stringify([]));
-
-    console.log(
-      chalk.blue(`|- Found ${api_commits.length} commits changing OAS file`)
-    );
-    console.log(
-      // chalk.blue(
-      //   `|-- From ${api_commits[0].commit_date} to ${
-      //     api_commits[api_commits.length - 1].commit_date
-      //   }`
-      // )
-      // fomart the dats as xxth Month, Year
-      chalk.blue(
-        `|-- From [${new Date(
-          api_commits[0].commit_date
-        ).getDate()}th ${new Date(api_commits[0].commit_date).toLocaleString(
-          "default",
-          {
-            month: "long",
-          }
-        )}, ${new Date(
-          api_commits[0].commit_date
-        ).getFullYear()}] to [${new Date(
-          api_commits[api_commits.length - 1].commit_date
-        ).getDate()}th ${new Date(
-          api_commits[api_commits.length - 1].commit_date
-        ).toLocaleString("default", {
-          month: "long",
-        })}, ${new Date(
-          api_commits[api_commits.length - 1].commit_date
-        ).getFullYear()}]`
-      )
-    );
-
-    // show progress bar
-    // add text near the bar
-    var bar = new cliProgress.SingleBar(
+    ////
+    // CLI logs
+    let bar = new cliProgress.SingleBar(
       {
         format:
           "|- Computing diffs - " +
@@ -95,40 +58,66 @@ export async function computeDiff(path, oaspath, isFast) {
         barIncompleteChar: "\u2591",
         hideCursor: true,
       },
-
       cliProgress.Presets.rect
     );
+    if (true) { // TODO: add a flag to disable logs
+      console.log(
+        chalk.blue(`|- Found ${api_commits.length} commits changing OAS file`)
+      );
+      console.log(
+        chalk.blue(
+          `|-- From [${new Date(
+            api_commits[0].commit_date
+          ).getDate()}th ${new Date(api_commits[0].commit_date).toLocaleString(
+            "default",
+            {
+              month: "long",
+            }
+          )}, ${new Date(
+            api_commits[0].commit_date
+          ).getFullYear()}] to [${new Date(
+            api_commits[api_commits.length - 1].commit_date
+          ).getDate()}th ${new Date(
+            api_commits[api_commits.length - 1].commit_date
+          ).toLocaleString("default", {
+            month: "long",
+          })}, ${new Date(
+            api_commits[api_commits.length - 1].commit_date
+          ).getFullYear()}]`
+        )
+      );
 
-    bar.start(api_commits.length - 1, 0, {
-      speed: "N/A",
-    });
+      bar.start(api_commits.length - 1, 0, {
+        speed: "N/A",
+      });
+    }
 
-    var next_pair = async (i) => {
-      // console.log(
-      //   chalk.blue(
-      //     `|-- Computing diff between ${api_commits[i - 1].hash} and ${
-      //       api_commits[i].hash
-      //     }`
-      //   )
-      // );
+    const next_pair = async (i) => {
+      if (false) { // TODO: add a flag to disable/enable diffs logs
+        console.log(
+          chalk.blue(
+            `|-- Computing diff between ${api_commits[i - 1].hash} and ${api_commits[i].hash
+            }`
+          )
+        );
+      }
       bar.update(i);
+
       if (api_commits[i]) {
+        const cmd = `cd ${__dirname}/oasdiff && go run main.go diff  ${join(
+          path,
+          api_commits[i - 1].hash + "." + api_commits[i - 1].fileExtension
+        )}  ${join(
+          path,
+          api_commits[i].hash + "." + api_commits[i].fileExtension
+        )} -f json`;
+
+
+
         try {
-          var cmd = `oasdiff -base  ${join(
-            path,
-            api_commits[i - 1].hash + "." + api_commits[i - 1].fileExtension
-          )} -revision ${join(
-            path,
-            api_commits[i].hash + "." + api_commits[i].fileExtension
-          )} -exclude-examples`;
-
-          var { stdout, stderr } = await exec(cmd);
-          // convert yaml to json
-
-          stdout = yaml_to_json.load(stdout);
-
-          var diffs = fs.readFileSync(join(path, ".diffs.json"));
-          diffs = JSON.parse(diffs);
+          const { stdout } = await exec(cmd);
+          if (fs.existsSync(join(path, ".diffs.json")))
+            var diffs = JSON.parse(fs.readFileSync(join(path, ".diffs.json")));
           diffs.push({
             hash: api_commits[i].hash,
             diff: stdout,
@@ -154,24 +143,20 @@ export async function computeDiff(path, oaspath, isFast) {
               JSON.stringify(nonBreakingChangesArray)
             );
           }
-
-          // diff 2 -check-breaking
-          var cmd_2 = `oasdiff -check-breaking -base  ${join(
+          const cmd_2 = `cd ${__dirname}/oasdiff && go run main.go breaking  ${join(
             path,
             api_commits[i - 1].hash + "." + api_commits[i - 1].fileExtension
-          )} -revision ${join(
+          )}  ${join(
             path,
             api_commits[i].hash + "." + api_commits[i].fileExtension
-          )} -exclude-examples  -format json`;
+          )} -f json`;
 
-          var { stdout, stderr } = await exec(cmd_2);
-
-          var diff_2 = stdout;
+          const stdout_breaking = await exec(cmd_2);
           var breaking = fs.readFileSync(join(path, ".breaking.json"));
           breaking = JSON.parse(breaking);
           breaking.push({
             hash: api_commits[i].hash,
-            breaking: JSON.parse(diff_2),
+            breaking: JSON.parse(stdout_breaking.stdout),
             commit_date: api_commits[i].commit_date,
           });
           fs.writeFileSync(
@@ -179,6 +164,7 @@ export async function computeDiff(path, oaspath, isFast) {
             JSON.stringify(breaking)
           );
         } catch (error) {
+          console.log(error);
           // if (error.reason != "duplicated mapping key") console.log(error);
         }
 

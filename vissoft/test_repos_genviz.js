@@ -3,7 +3,7 @@ import path from "path";
 import { join } from "path";
 import { exec } from "child_process";
 import { fetchHistory, fetchOASFiles } from "../bin/fetch_history.js";
-import { computeDiff } from "../bin/oasdiff.js";
+import { compute_diff } from "../bin/oasdiff.js";
 import { generateChangesViz } from "../bin/create_sunburst.js";
 import { renderTree } from "../bin/create_changes_tree.js";
 

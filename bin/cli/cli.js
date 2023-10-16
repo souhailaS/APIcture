@@ -17,27 +17,28 @@
  */
 
 import { Command } from "commander";
-const program = new Command();
-import { execSync } from "child_process";
 import { fetchHistory, fetchOASFiles } from "../fetch_history.js";
-import { computeDiff } from "../oasdiff.js";
+import { compute_diff } from "../oasdiff.js";
 import { generateChangesViz } from "../create_sunburst.js";
 import { renderTree } from "../create_changes_tree.js";
-
 import { computeSizeMetrics } from "../metrics.js";
 import { renderMetrics } from "../create_metrics_charts.js";
 import { computeOverallGrowthMetrics } from "../overall_metrics.js";
 import { renderReport } from "../render_report.js";
 import { renderAllCharts } from "../render_all_viz.js";
 import chalk from "chalk";
-import { join } from "path";
+
+
+// local imports 
 import { generateOAS } from "../oasgen/oasgen.js";
 import vissoft from "../../vissoft/vissoft.js";
-// import packageJson from "../../package.json";
 import packageJson from "../../package.json" assert { type: "json" };
 
+const program = new Command();
+
 /**
- * If no parameter is passed generate both the version clock and changes visualizations
+ *  no subcommands
+ * [apict]
  */
 program
   .description("Generate Evolution visualizations")
@@ -45,20 +46,16 @@ program
     "-r, --repo <repo>",
     "Path to the repository. Defaults to current working directory."
   )
-  
   .option("-o, --output <path>", "Path to the output directory")
-  // .option("-freq, --frequency <frequency>", "Minimum frequency of changes")
+  .option("-freq, --frequency <frequency>", "Minimum frequency of changes")
   .option("-fs, --fast", "Fast mode")
   .option("-f, --format <format>", "Output format")
   .option("-a, --all", "Generate OAS for all OAS files found in the repo")
-  // .option("-d, --details", "Show details")
-  // file name for the output file
   .option(
     "-fn, --filename <filename>",
     "Output file name [Without file extension]"
   )
-  // add version option
-  .option("-v, --version", "Output the current version")
+  .option("-v, --version", "Output the current version of APIcture")
 
   .action(async () => {
     message();
@@ -87,7 +84,7 @@ program
           oasFiles[i].oaspath
         );
 
-        await computeDiff(repoPath, oasFiles[i].oaspath, fast);
+        await compute_diff(repoPath, oasFiles[i].oaspath, fast);
 
         /**
          *
@@ -171,7 +168,7 @@ program
       if (Array.isArray(oasFiles)) await nextFile(0);
       else {
         // console.log(oasFiles);
-        await computeDiff(repoPath, oasFiles.oas_file, fast);
+        await compute_diff(repoPath, oasFiles.oas_file, fast);
       }
       return true;
 
@@ -216,7 +213,7 @@ program
             repoPath,
             oasFiles[i].oaspath
           );
-          await computeDiff(repoPath, oasFiles[i].oaspath, fast);
+          await compute_diff(repoPath, oasFiles[i].oaspath, fast);
           /**
            *
            * @param {*} path
@@ -289,7 +286,7 @@ program
             oasFiles[i].oaspath
           );
 
-          await computeDiff(repoPath, oasFiles[i].oaspath, fast);
+          await compute_diff(repoPath, oasFiles[i].oaspath, fast);
           var changesEcharts = await renderTree(
             repoPath,
             options.frequency,
@@ -346,7 +343,7 @@ program
     const repoPath = options.repo || process.cwd();
     try {
       await fetchHistory(repoPath);
-      await computeDiff(repoPath);
+      await compute_diff(repoPath);
       var metrics = await computeSizeMetrics(repoPath);
       var usedOptions =
         Object.keys(vizOptions).filter((key) => vizOptions[key] === true)
@@ -379,7 +376,7 @@ program
     const repoPath = options.repo || process.cwd();
     if (!options.fast) {
       await fetchHistory(repoPath);
-      await computeDiff(repoPath);
+      await compute_diff(repoPath);
     }
 
     var metrics = await computeSizeMetrics(repoPath);

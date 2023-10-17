@@ -1,8 +1,6 @@
 
 # Interactively exploring API changes and versioning consistency
 
-### Authors: Souhaila Serbout, Diana Carolina Muñoz Hurtado, Cesare Pautasso
-#### Emails: souhaila.serbout@usi.ch, carolina.munoz@usi.ch, c.pautasso@ieee.org
 Our [paper](./VISSOFT_2023_accepted.pdf) is based on APIcture, a novel tool that addresses the need for comprehensive and intuitive visualization of web API evolution.
 We invite the Artifact Evaluation Committee to evaluate the practicality and effectiveness of APIcture for the reproducibility of the
 visualization we included in our paper and published in the online gallery: https://souhailas.github.io/VISSOFT2023/
@@ -33,73 +31,11 @@ To start using APIcture, you need to install the CLI tool. Follow these steps:
     * Install Node.js and npm: APIcture requires Node.js and npm (Node Package Manager) to be installed on your system. If you haven’t already installed them, you can download them from the official Node.js website: https://nodejs.org/
       Minimum required compatible version is:v16.18.
 
-   * Install `oasdiff`: https://github.com/Tufin/oasdiff
+   * Install the latest Golang version suitable to your machine: https://go.dev/dl/
 
-   * Install APIcture: Once you have Node.js and npm installed. You can download APIcture repository from Zenodo: https://zenodo.org/record/8253385  or clone the repository from GitHub: https://github.com/souhailaS/APIcture.
-
-Once downloaded navigate to the root of the repository and download dependencies by running: `npm install`
-
-Once finished, install the current APIcture package by running: 
-```
-npm install . -g
-```
-
-**Alternative.** Since APIcture is also released on NPM (https://www.npmjs.com/package/apict), it is possible to install it without need to manually download the source code.  
-Open a terminal window and run the following command to install APIcture globally on your system: `npm install apict -g`
-
-Make sure to add the `-g` to install it as a global module. 
+   * Install APIcture using the command: `npm install apict -g`
 
 To be sure that APIcture is properly installed, run: `apict -v` of `apict --version` this should display the current version of the artifact. 
-
-### Reproducing the visualizations in the VISSOFT paper
-
-To facilitate the reproducibility of the visualizations showcased in the public gallery, we have introduced a temporary command that streamlines the generation of all visualizations in a single run:
-
-`apict vissoft`
-
-By executing this command, APIcture automatically clones a predefined list of GitHub repository URLs, thoughtfully provided within the APIcture repository. It is important to note that an active internet connection is required to retrieve these Git repositories from GitHub. The command subsequently generates visualizations for all the cloned repositories, and as an added benefit, it creates an index.html page. This page serves as a convenient navigation hub, allowing users to seamlessly explore and access all the generated visualizations in a coherent manner.
-
-When utilizing the command apict vissoft, users will initially be prompted to provide  the JSON file containing the array of URLs of the repositories to clone, and a destination folder path where the repositories will be cloned. The JSON file can be downloaded from: [https://github.com/souhailaS/APIcture/blob/main/git\_urls.json ](https://github.com/souhailaS/APIcture/blob/main/vissoft/git_urls.json). You can customize this file and remove some of the URLs if you want to test it with fewer URLs (Figure 1). 
-
-***If no path of the JSON file containing the URLs of the repositories to clone is given or the inserted path is invalid, it will be defaulted to the git_urls.json included in APIcture's repository.  In case the user opts not to input any path, the current location will automatically be designated as the destination folder for the cloned repositories***
-
-
-![Console after running apict vissoft ](./figures-artifact/vissoftprompt1.png)
-<p style="text-align: center;" ><em >Figure 1: Console after running apict vissoft</em></p>
-
-
-
- If the specified destination folder does not exist, the tool will automatically create it. The repositories are then cloned one after the other showing in the console the state of the cloning phase (Figure 2).
-
- ![Console showing the progress of the projects cloning phase ](./figures-artifact/vissoftprompt2.png)
- <p style="text-align: center;" ><em >Figure 2: Console showing the progress of the projects cloning phase</em></p>
-
- On the other hand, if the folder already exists, the user will be prompted to decide whether they want to completely recreate the folder from scratch and subsequently clone all the repositories into it. If the user chooses not to recreate the folder from scratch, the system will provide information about the number of repositories present within that folder. Following this, the generation of visualizations for the existing APIs in the folder will commence (Figure 3). In scenarios where no repositories are present in the designated folder, the tool will proceed to clone the repositories before initiating the process of visualization generation.
-
-
- ![Cloning destination folder already exists](./figures-artifact/vissoftprompt3.png)
-   <p style="text-align: center;" ><em >Figure 3: Cloning destination folder already exists</em></p>
-
-
-Upon completion of the cloning process, the user will be prompted to specify a path for the destination folder where the resulting visualizations will be stored. In the event that no path is provided, the current directory will be regarded as the destination (Figure 4). 
-
-![Destination folder where to save the generated visualizations](./figures-artifact/vissoftprompt4.png)
-<p style="text-align: center;" ><em >Figure 4: Destination folder where to save the generated visualizations</em></p>
-
-Subsequently, a directory named VISSOFT will be established within the designated destination folder. This directory will accommodate the entire collection of generated artifacts. These artifacts encompass individual visualizations for each API, accompanied by an index.html file. The latter functions as a navigational interface, enabling access to each of the generated visualizations (Figure 5).
-
-![Structure of the generated output](./figures-artifact/vissoftoutput.png)
-<p style="text-align: center;" ><em >Figure 5: Structure of the generated output</em></p>
-
-To generate the outputs APIcture systematically parses all files within the projects with the extensions .yaml or .json, and subsequently assesses whether these files conform to the OpenAPI specification. Upon detecting valid OpenAPI files, the tool proceeds to retrieve their complete version histories. Subsequently, APIcture initiates the generation of visualizations for each identified OpenAPI file, following the comprehensive procedure delineated in Figure 3 of [1](./VISSOFT_2023_accepted.pdf).
-
-It is important to note that a single repository might contain OpenAPI files pertaining to multiple APIs. To effectively handle this scenario, APIcture structurally organizes the generated outputs, considering both the repository's name and the name of the respective OpenAPI file. 
-
-In the event that the script is terminated during the visualization generation phase and is subsequently restarted, the user will be presented with the choice of either resuming visualization generation for projects that were not previously processed or reinitiating the entire procedure (Figure 6). It is noteworthy that this phase does not necessitate an internet connection. The repositories history is locally fetched from git history.
-
-![Cloned projects have already been processed](./figures-artifact/vissoftprompt5.png)
-<p style="text-align: center;" ><em >Figure 6: Cloned projects have already been processed</em></p>
-
 
 ### Basic usage
 
@@ -241,11 +177,62 @@ codebase.
 ![APIcture - No OpenAPI File](./figures-artifact/noOAS.png)
 <p style="text-align: center;" ><em >Figure 14: APIcture - No OpenAPI File</em></p>
 
-## CONTACT
 
-We encourage the Artifact Evaluation Committee to reach out to the authors for any inquiries, feedback, or support
-related to the evaluation process. We are committed to providing assistance and addressing any questions that may
-arise during the evaluation.
+### Reproducing the visualizations in the VISSOFT paper
+
+To facilitate the reproducibility of the visualizations showcased in the public gallery, we have introduced a temporary command that streamlines the generation of all visualizations in a single run:
+
+`apict vissoft`
+
+By executing this command, APIcture automatically clones a predefined list of GitHub repository URLs, thoughtfully provided within the APIcture repository. It is important to note that an active internet connection is required to retrieve these Git repositories from GitHub. The command subsequently generates visualizations for all the cloned repositories, and as an added benefit, it creates an index.html page. This page serves as a convenient navigation hub, allowing users to seamlessly explore and access all the generated visualizations in a coherent manner.
+
+When utilizing the command apict vissoft, users will initially be prompted to provide  the JSON file containing the array of URLs of the repositories to clone, and a destination folder path where the repositories will be cloned. The JSON file can be downloaded from: [https://github.com/souhailaS/APIcture/blob/main/git\_urls.json ](https://github.com/souhailaS/APIcture/blob/main/vissoft/git_urls.json). You can customize this file and remove some of the URLs if you want to test it with fewer URLs (Figure 1). 
+
+***If no path of the JSON file containing the URLs of the repositories to clone is given or the inserted path is invalid, it will be defaulted to the git_urls.json included in APIcture's repository.  In case the user opts not to input any path, the current location will automatically be designated as the destination folder for the cloned repositories***
+
+
+![Console after running apict vissoft ](./figures-artifact/vissoftprompt1.png)
+<p style="text-align: center;" ><em >Figure 1: Console after running apict vissoft</em></p>
+
+
+
+ If the specified destination folder does not exist, the tool will automatically create it. The repositories are then cloned one after the other showing in the console the state of the cloning phase (Figure 2).
+
+ ![Console showing the progress of the projects cloning phase ](./figures-artifact/vissoftprompt2.png)
+ <p style="text-align: center;" ><em >Figure 2: Console showing the progress of the projects cloning phase</em></p>
+
+ On the other hand, if the folder already exists, the user will be prompted to decide whether they want to completely recreate the folder from scratch and subsequently clone all the repositories into it. If the user chooses not to recreate the folder from scratch, the system will provide information about the number of repositories present within that folder. Following this, the generation of visualizations for the existing APIs in the folder will commence (Figure 3). In scenarios where no repositories are present in the designated folder, the tool will proceed to clone the repositories before initiating the process of visualization generation.
+
+
+ ![Cloning destination folder already exists](./figures-artifact/vissoftprompt3.png)
+   <p style="text-align: center;" ><em >Figure 3: Cloning destination folder already exists</em></p>
+
+
+Upon completion of the cloning process, the user will be prompted to specify a path for the destination folder where the resulting visualizations will be stored. In the event that no path is provided, the current directory will be regarded as the destination (Figure 4). 
+
+![Destination folder where to save the generated visualizations](./figures-artifact/vissoftprompt4.png)
+<p style="text-align: center;" ><em >Figure 4: Destination folder where to save the generated visualizations</em></p>
+
+Subsequently, a directory named VISSOFT will be established within the designated destination folder. This directory will accommodate the entire collection of generated artifacts. These artifacts encompass individual visualizations for each API, accompanied by an index.html file. The latter functions as a navigational interface, enabling access to each of the generated visualizations (Figure 5).
+
+![Structure of the generated output](./figures-artifact/vissoftoutput.png)
+<p style="text-align: center;" ><em >Figure 5: Structure of the generated output</em></p>
+
+To generate the outputs APIcture systematically parses all files within the projects with the extensions .yaml or .json, and subsequently assesses whether these files conform to the OpenAPI specification. Upon detecting valid OpenAPI files, the tool proceeds to retrieve their complete version histories. Subsequently, APIcture initiates the generation of visualizations for each identified OpenAPI file, following the comprehensive procedure delineated in Figure 3 of [1](./VISSOFT_2023_accepted.pdf).
+
+It is important to note that a single repository might contain OpenAPI files pertaining to multiple APIs. To effectively handle this scenario, APIcture structurally organizes the generated outputs, considering both the repository's name and the name of the respective OpenAPI file. 
+
+In the event that the script is terminated during the visualization generation phase and is subsequently restarted, the user will be presented with the choice of either resuming visualization generation for projects that were not previously processed or reinitiating the entire procedure (Figure 6). It is noteworthy that this phase does not necessitate an internet connection. The repositories history is locally fetched from git history.
+
+![Cloned projects have already been processed](./figures-artifact/vissoftprompt5.png)
+<p style="text-align: center;" ><em >Figure 6: Cloned projects have already been processed</em></p>
+
+
+
+
+## Contact
+You can contact us by email: souhaila.serbout@usi.ch
+
 Issues can be also added to the public repository of APIcture: https://github.com/souhailaS/APIcture. We are currently
 actively enhancing and maintaining it.
 
@@ -261,13 +248,13 @@ actively enhancing and maintaining it.
 
 (^4) https://souhailas.github.io/VISSOFT2023/
 
-## REFERENCES
+## Referencesmo
 [1] Souhaila Serbout, Diana Carolina Muñoz Hurtado, and Cesare Pautasso. Interactively exploring API changes and versioning consistency. In 11th
-IEEE Working Conference on Software Visualization (VISSOFT 2023), Bogota, Colombia, October 2023. IEEE. (Accepted)
+IEEE Working Conference on Software Visualization (VISSOFT 2023), Bogota, Colombia, October 2023. IEEE. [Best Paper Award]
 
 [2]Souhaila Serbout, Alessandro Romanelli, and Cesare Pautasso. Expresso: From express.js implementation code to openapi interface descriptions. In
 Thais Batista, Tomáš Bureš, Claudia Raibulet, and Henry Muccini, editors,Software Architecture. ECSA 2022 Tracks and Workshops, pages 29–44,
-Cham, 2023. Springer International Publishing. ISBN 978-3-031-36889-9.
+Cham, 2023. Springer International Publishing. ISBN 978-3-031-36889-9. [Best Tools and Demos Paper Award]
 
 
 

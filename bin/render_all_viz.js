@@ -151,7 +151,7 @@ const HTML = `<!DOCTYPE html>
       // Initialize ECharts chart with the container element
       var chartContainer = document.getElementById('changes');
       var chart = echarts.init(chartContainer);
-      var chartOptions_1 = <%-JSON.stringify(JSON.parse(JSON.stringify(changesEcharts))) %>;
+      var chartOptions_1 = <%-JSON.stringify(JSON.parse(JSON.stringify(changes_echarts))) %>;
       chart.setOption(chartOptions_1);
       window.addEventListener('resize', function() {
         chart.resize();
@@ -159,7 +159,7 @@ const HTML = `<!DOCTYPE html>
 
       var chartContainer = document.getElementById('versions');
       var chart = echarts.init(chartContainer);
-      var chartOptions_2 = <%-JSON.stringify(JSON.parse(JSON.stringify(versionsEcharts))) %>;
+      var chartOptions_2 = <%-JSON.stringify(JSON.parse(JSON.stringify(versions_echarts))) %>;
       chart.setOption(chartOptions_2);
       window.addEventListener('resize', function() {
           chart.resize();
@@ -174,8 +174,8 @@ const HTML = `<!DOCTYPE html>
 
 export function renderAllCharts(input) {
   var rendered = ejs.render(HTML, {
-    changesEcharts: JSON.parse(JSON.stringify(input.changesEcharts)),
-    versionsEcharts: JSON.parse(JSON.stringify(input.versionsEchart)),
+    changes_echarts: JSON.parse(JSON.stringify(input.changes_echarts)),
+    versions_echarts: JSON.parse(JSON.stringify(input.versions_echarts)),
     history_metadata: input.history_metadata,
     options:input.options || {},
     usedOptions:input.usedOptions,

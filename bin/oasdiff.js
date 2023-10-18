@@ -19,21 +19,20 @@ import cliProgress from "cli-progress";
 import colors from "ansi-colors";
 
 
-export async function compute_diff(path, oaspath, isFast) {
+export async function compute_diff(path, oas_path, isFast) {
   let diffs_file = fs.existsSync(
-    join(path, ".previous_versions", oaspath.split(".")[0], ".diffs.json")
+    join(path, ".previous_versions", oas_path.split(".")[0], ".diffs.json")
   )
-
   if (
     !isFast ||
     (isFast &&
       !diffs_file)
   ) {
-    path = join(path, ".previous_versions", oaspath.split(".")[0]);
+    path = join(path, ".previous_versions", oas_path.split(".")[0]);
     let api_commits = fs.readFileSync(join(path, ".api_commits.json"));
     api_commits = JSON.parse(api_commits);
 
-    // initialize diffs file
+    // initialize diffs files data
     fs.writeFileSync(
       join(path, ".diffs.json"),
       JSON.stringify([
@@ -60,7 +59,7 @@ export async function compute_diff(path, oaspath, isFast) {
       },
       cliProgress.Presets.rect
     );
-    if (true) { // TODO: add a flag to disable logs
+    if (true) { // TODO: #17 add a flag to disable logs
       console.log(
         chalk.blue(`|- Found ${api_commits.length} commits changing OAS file`)
       );
@@ -93,7 +92,8 @@ export async function compute_diff(path, oaspath, isFast) {
     }
 
     const next_pair = async (i) => {
-      if (false) { // TODO: add a flag to disable/enable diffs logs
+      if (false) { 
+        // TODO #16 add a flag to disable/enable diffs logs @souhailaS
         console.log(
           chalk.blue(
             `|-- Computing diff between ${api_commits[i - 1].hash} and ${api_commits[i].hash
@@ -111,8 +111,6 @@ export async function compute_diff(path, oaspath, isFast) {
           path,
           api_commits[i].hash + "." + api_commits[i].fileExtension
         )} -f json`;
-
-
 
         try {
           const { stdout } = await exec(cmd);
@@ -143,6 +141,7 @@ export async function compute_diff(path, oaspath, isFast) {
               JSON.stringify(nonBreakingChangesArray)
             );
           }
+
           const cmd_2 = `cd ${__dirname}/oasdiff && go run main.go breaking  ${join(
             path,
             api_commits[i - 1].hash + "." + api_commits[i - 1].fileExtension
@@ -165,7 +164,6 @@ export async function compute_diff(path, oaspath, isFast) {
           );
         } catch (error) {
           console.log(error);
-          // if (error.reason != "duplicated mapping key") console.log(error);
         }
 
         if (i < api_commits.length - 1) {

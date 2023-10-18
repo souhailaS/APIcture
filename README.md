@@ -13,7 +13,7 @@ visualization we included in our paper and published in the online gallery: http
 # APIcture
 
 APIcture is a comprehensive tool designed to empower researchers, developers, and users to gain deeper insights into
-the evolution of web APIs. Our submission, APIcture, introduces an innovative approach to visualizing API changes and
+the evolution of web APIs. It introduces an innovative approach to visualizing API changes and
 versioning strategies, enabling users to comprehend the temporal sequence of changes, assess compatibility issues, and
 understand versioning practices. The tool encompasses two main visualizations: API Changes and API Version Clock.
 The former provides a detailed view of changes occurring at specific time intervals, while the latter offers an overarching
@@ -21,6 +21,10 @@ view of version upgrades and change patterns. Our Artifact Evaluation submission
 functionality, utilization, and practicality to generate API evolution visualizations. We provide clear instructions on
 how to reproduce our visualization and explore other API evolution cases.
 
+
+Find visualizations explanation details in [1].
+
+APIcture serves also to generate evolution metrics and their visualizations. 
 ## Usage guide
 
 ### Installation

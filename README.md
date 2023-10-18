@@ -66,6 +66,8 @@ generating visualizations for multiple specifications within the same repository
 visualization with the specified file name (without file extension) in the output directory.
 - -h, –help: Displays the help information for the command, providing a concise overview of the available
 options.
+- -v, –version: Displays the current version of the tool.
+- -c, -clean: Deletes the artifacts used in the fast mode.
 
 ![Help Subcommand](./figures-artifact/help.png)
 <p style="text-align: center;" ><em >Figure 7: Help Subcommand</em></p>
@@ -250,11 +252,11 @@ actively enhancing and maintaining it.
 
 ## References
 [1] Souhaila Serbout, Diana Carolina Muñoz Hurtado, and Cesare Pautasso. Interactively exploring API changes and versioning consistency. In 11th
-IEEE Working Conference on Software Visualization (VISSOFT 2023), Bogota, Colombia, October 2023. IEEE. [Best Paper Award]
+IEEE Working Conference on Software Visualization (VISSOFT 2023), Bogota, Colombia, October 2023. IEEE. [ 🏆 Best Paper Award]
 
 [2] Souhaila Serbout, Alessandro Romanelli, and Cesare Pautasso. Expresso: From express.js implementation code to openapi interface descriptions. In
 Thais Batista, Tomáš Bureš, Claudia Raibulet, and Henry Muccini, editors,Software Architecture. ECSA 2022 Tracks and Workshops, pages 29–44,
-Cham, 2023. Springer International Publishing. ISBN 978-3-031-36889-9. [Best Tools and Demos Paper Award]
+Cham, 2023. Springer International Publishing. ISBN 978-3-031-36889-9. [ 🏆 Best Tools and Demos Paper Award]
 
 
 

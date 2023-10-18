@@ -27,13 +27,12 @@ import { computeOverallGrowthMetrics } from "../overall_metrics.js";
 import { renderReport } from "../render_report.js";
 import { renderAllCharts } from "../render_all_viz.js";
 import chalk from "chalk";
-
-
 // local imports 
 import { generateOAS } from "../oasgen/oasgen.js";
 import vissoft from "../../vissoft/vissoft.js";
 import test_apicture from "../../bin/test/test.js";
 import packageJson from "../../package.json" assert { type: "json" };
+import fs from "fs";
 
 const program = new Command();
 
@@ -56,6 +55,7 @@ program
     "-fn, --filename <filename>",
     "Output file name [Without file extension]"
   )
+  .option("-c, --clean", "Clean up all the history files after generation")
   .option("-v, --version", "Output the current version of APIcture")
 
   .action(async () => {
@@ -71,6 +71,7 @@ program
     const format = options.format;
     const filename = options.filename;
     const fast = options.fast || false;
+    const clean = options.clean || false;
 
     try {
       const oasFiles = await fetchOASFiles(repoPath, options.all);
@@ -80,7 +81,6 @@ program
           oasFiles[i].oas_path
         );
         await compute_diff(repoPath, oasFiles[i].oas_path, fast);
-
         /**
          *
          * @param {*} path
@@ -157,6 +157,10 @@ program
             options: vizOptions,
             usedOptions,
           };
+
+          console.log(
+            to_render
+          );
           renderAllCharts(to_render);
         }
 
@@ -165,6 +169,17 @@ program
           oasFiles[i].oas_path
         );
         renderReport(overrAll);
+
+        if (clean) {
+          await fs.promises.rm(`${repoPath}/.previous_versions`, {
+            recursive: true,
+          });
+          console.log(
+            chalk.bold(
+              `|-- Cleaned 🧹 🧹 `
+            )
+          );
+        }
 
         i++;
         if (i < oasFiles.length) {
@@ -269,6 +284,7 @@ program
   .option("-freq, --frequency <frequency>", "Minimum frequency of changes")
   .option("-d, --details", "Show details")
   .option("-a, --all", "Generate OAS for all OAS files found in the repo")
+  .option("-c, --clean", "Clean up all the history files after generation")
 
   .action(async () => {
     message();
@@ -317,6 +333,15 @@ program
     } catch (err) {
       console.log(err);
     }
+
+    if (options.clean) {
+      fs.promises.rm(`${repoPath}/.previous_versions`, { recursive: true });
+      console.log(
+        chalk.bold(
+          `|-- Cleaned 🧹 🧹 `
+        )
+      );
+    }
   });
 
 program
@@ -334,6 +359,8 @@ program
   .option("-d, --datamodel", "Show datamodel")
   .option("-bc, --breakingChanges", "Show breaking changes")
   .option("-bm, --breakingMethods", "Show breaking methods")
+  .option("-c, --clean", "Clean up all the history files after generation")
+
 
   .action(async () => {
     message();
@@ -357,6 +384,15 @@ program
     } catch (err) {
       console.log(err);
     }
+
+    if (options.clean) {
+      fs.promises.rm(`${repoPath}/.previous_versions`, { recursive: true });
+      console.log(
+        chalk.bold(
+          `|-- Cleaned 🧹 🧹 `
+        )
+      );
+    }
   });
 
 /**
@@ -375,6 +411,8 @@ program
   .option("-o, --output <path>", "Path to the output directory")
   .option("-f, --format <format>", "Output format")
   .option("-fs", "--fast", "Fast mode")
+  .option("-c, --clean", "Clean up all the history files after generation")
+
   .action(async () => {
     message();
     const options = program.opts();
@@ -387,6 +425,16 @@ program
     var metrics = await computeSizeMetrics(repoPath);
     const overrAll = await computeOverallGrowthMetrics(repoPath, metrics);
     renderReport(overrAll);
+
+    if (options.clean) {
+      fs.promises.rm(`${repoPath}/.previous_versions`, { recursive: true });
+      console.log(
+        chalk.bold(
+          `|-- Cleaned 🧹 🧹 `
+        )
+      );
+    }
+
   });
 
 

@@ -1,5 +1,5 @@
 
-# Interactively exploring API changes and versioning consistency
+<!-- # Interactively exploring API changes and versioning consistency
 
 Our [paper](./VISSOFT_2023_accepted.pdf) is based on APIcture, a novel tool that addresses the need for comprehensive and intuitive visualization of web API evolution.
 We invite the Artifact Evaluation Committee to evaluate the practicality and effectiveness of APIcture for the reproducibility of the
@@ -8,9 +8,9 @@ visualization we included in our paper and published in the online gallery: http
 
 - This README.md is also available in a PDF readable format [here](./2023_VISSOFT_Artifact.pdf) 
 
-- The reproducibility guide is detailed in [Reproducing the visualizations in the VISSOFT paper Section](#reproducing-the-visualizations-in-the-vissoft-paper) of this document.
+- The reproducibility guide is detailed in [Reproducing the visualizations in the VISSOFT paper Section](#reproducing-the-visualizations-in-the-vissoft-paper) of this document. -->
 
-## Overview on APIcture
+# APIcture
 
 APIcture is a comprehensive tool designed to empower researchers, developers, and users to gain deeper insights into
 the evolution of web APIs. Our submission, APIcture, introduces an innovative approach to visualizing API changes and

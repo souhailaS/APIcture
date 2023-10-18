@@ -51,7 +51,7 @@ mand and any additional options to generate the desired visualizations. The avai
 
    - `apict <spec-path>`: Generates visualizations for the OpenAPI specification located at the specified path.
    - `apict changes <spec-path>`: Focuses specifically on changes localization.
-   - `apict versioning <spec-path>`: Analyzes version upgrades versus changes types.
+   - `apict clock <spec-path>`: Analyzes version upgrades versus changes types.
    - `apict metrics`: Generates visualizations for API metrics.
 * **Subcommands available options:** APIcture provides several options (Figure 1) to customize the visualization
 process according to the users needs:

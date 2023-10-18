@@ -248,11 +248,11 @@ actively enhancing and maintaining it.
 
 (^4) https://souhailas.github.io/VISSOFT2023/
 
-## Referencesmo
+## References
 [1] Souhaila Serbout, Diana Carolina Muñoz Hurtado, and Cesare Pautasso. Interactively exploring API changes and versioning consistency. In 11th
 IEEE Working Conference on Software Visualization (VISSOFT 2023), Bogota, Colombia, October 2023. IEEE. [Best Paper Award]
 
-[2]Souhaila Serbout, Alessandro Romanelli, and Cesare Pautasso. Expresso: From express.js implementation code to openapi interface descriptions. In
+[2] Souhaila Serbout, Alessandro Romanelli, and Cesare Pautasso. Expresso: From express.js implementation code to openapi interface descriptions. In
 Thais Batista, Tomáš Bureš, Claudia Raibulet, and Henry Muccini, editors,Software Architecture. ECSA 2022 Tracks and Workshops, pages 29–44,
 Cham, 2023. Springer International Publishing. ISBN 978-3-031-36889-9. [Best Tools and Demos Paper Award]
 

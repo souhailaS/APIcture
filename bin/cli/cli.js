@@ -32,13 +32,14 @@ import chalk from "chalk";
 // local imports 
 import { generateOAS } from "../oasgen/oasgen.js";
 import vissoft from "../../vissoft/vissoft.js";
+import test_apicture from "../../bin/test/test.js";
 import packageJson from "../../package.json" assert { type: "json" };
 
 const program = new Command();
 
 /**
- *  no subcommands
- * [apict]
+ * No subcommands
+ * When no subcommands are specified, the default action is to generate all visualizations in HTML format.
  */
 program
   .description("Generate Evolution visualizations")
@@ -59,66 +60,73 @@ program
 
   .action(async () => {
     message();
-   
-    // output the current version
     if (program.opts().version) {
-       console.log("VERSION: ",packageJson.version);
+      console.log("Current version is", chalk.bold(packageJson.version));
       return;
     }
 
     const options = program.opts();
     const repoPath = options.repo || process.cwd();
-    const outputDir = options.output;
+    const output_dir = options.output;
     const format = options.format;
     const filename = options.filename;
     const fast = options.fast || false;
 
     try {
-      let oasFiles = [];
-
-      oasFiles = await fetchOASFiles(repoPath, options.all);
-
-      let nextFile = async (i) => {
+      const oasFiles = await fetchOASFiles(repoPath, options.all);
+      const nextFile = async (i) => {
         let history_metadata = await fetchHistory(
           repoPath,
-          oasFiles[i].oaspath
+          oasFiles[i].oas_path
         );
-
-        await compute_diff(repoPath, oasFiles[i].oaspath, fast);
+        await compute_diff(repoPath, oasFiles[i].oas_path, fast);
 
         /**
          *
          * @param {*} path
          * @param {*} format
-         * @param {*} oaspath
+         * @param {*} oas_path
          * @param {*} output
          * @param {*} all
          * @param {*} history
          * @returns
-         */
-        var versionsEchart = await generateChangesViz(
+         **/
+        var versions_echarts = await generateChangesViz(
           repoPath,
           format,
-          oasFiles[i].oaspath,
-          outputDir,
+          oasFiles[i].oas_path,
+          output_dir,
           options.all,
           history_metadata,
           filename
         );
 
-        var changesEcharts = await renderTree(
+
+        /**
+         * 
+         * @param {*} path
+         * @param {*} frequency
+         * @param {*} format
+         * @param {*} aggregate
+         * @param {*} oas_path
+         * @param {*} output
+         * @param {*} all
+         * @param {*} history
+         * @returns
+         **/
+        var changes_echarts = await renderTree(
           repoPath,
           options.frequency,
           format,
           false,
-          oasFiles[i].oaspath,
+          oasFiles[i].oas_path,
           options.output,
           false,
           history_metadata,
           filename
         );
 
-        var metrics = await computeSizeMetrics(repoPath, oasFiles[i].oaspath);
+        var metrics = await computeSizeMetrics(repoPath, oasFiles[i].oas_path);
         var vizOptions = {};
         vizOptions.endpoints = options.endpoints ? true : false;
         vizOptions.methods = options.methods ? true : false;
@@ -133,17 +141,17 @@ program
           vizOptions,
           options.format,
           usedOptions,
-          oasFiles[i].oaspath
+          oasFiles[i].oas_path
         );
 
         if (format == "html" || !format) {
           var to_render = {
-            changesEcharts,
-            versionsEchart,
+            changes_echarts,
+            versions_echarts,
             path: repoPath,
-            output: outputDir,
-            filename: filename ? filename : oasFiles[i].oaspath.split(".")[0],
-            oaspath: oasFiles[i].oaspath.split(".")[0],
+            output: output_dir,
+            filename: filename ? filename : oasFiles[i].oas_path.split(".")[0],
+            oas_path: oasFiles[i].oas_path.split(".")[0],
             history_metadata,
             metrics: chartOptions,
             options: vizOptions,
@@ -154,7 +162,7 @@ program
 
         const overrAll = await computeOverallGrowthMetrics(
           repoPath,
-          oasFiles[i].oaspath
+          oasFiles[i].oas_path
         );
         renderReport(overrAll);
 
@@ -167,12 +175,9 @@ program
       };
       if (Array.isArray(oasFiles)) await nextFile(0);
       else {
-        // console.log(oasFiles);
         await compute_diff(repoPath, oasFiles.oas_file, fast);
       }
       return true;
-
-      //
     } catch (err) {
       console.log(err);
     }
@@ -197,7 +202,7 @@ program
     message();
     const options = program.opts();
     const repoPath = options.repo || process.cwd();
-    const outputDir = options.output;
+    const output_dir = options.output;
     const format = options.format;
     const filename = options.filename;
     const fast = options.fast;
@@ -211,24 +216,24 @@ program
         var nextFile = async (i) => {
           var history_metadata = await fetchHistory(
             repoPath,
-            oasFiles[i].oaspath
+            oasFiles[i].oas_path
           );
-          await compute_diff(repoPath, oasFiles[i].oaspath, fast);
+          await compute_diff(repoPath, oasFiles[i].oas_path, fast);
           /**
            *
            * @param {*} path
            * @param {*} format
-           * @param {*} oaspath
+           * @param {*} oas_path
            * @param {*} output
            * @param {*} all
            * @param {*} history
            * @returns
            */
-          var versionsEchart = await generateChangesViz(
+          var versions_echarts = await generateChangesViz(
             repoPath,
             format,
-            oasFiles[i].oaspath,
-            outputDir,
+            oasFiles[i].oas_path,
+            output_dir,
             options.all,
             history_metadata,
             filename
@@ -270,7 +275,7 @@ program
     const options = program.opts();
     const repoPath = options.repo || process.cwd();
     var aggregate = options.details ? false : true;
-    var outputDir = options.output;
+    var output_dir = options.output;
     var format = options.format;
     var fast = options.fast;
     var filename = options.filename;
@@ -283,17 +288,17 @@ program
         var nextFile = async (i) => {
           var history_metadata = await fetchHistory(
             repoPath,
-            oasFiles[i].oaspath
+            oasFiles[i].oas_path
           );
 
-          await compute_diff(repoPath, oasFiles[i].oaspath, fast);
-          var changesEcharts = await renderTree(
+          await compute_diff(repoPath, oasFiles[i].oas_path, fast);
+          var changes_echarts = await renderTree(
             repoPath,
             options.frequency,
             format,
             false,
-            oasFiles[i].oaspath,
-            outputDir,
+            oasFiles[i].oas_path,
+            output_dir,
             false,
             history_metadata,
             filename
@@ -404,21 +409,40 @@ program
     await vissoft();
   });
 
+
+
+
+
+/**
+ * Generate the viz for test projects 
+ */
+program
+  .command("test")
+  .description("Generate the gallery appended to test projects.")
+  .action(async () => {
+    message();
+    console.log("The gallery visualizations generation starts by downloading the \nrepositories from GitHub, then generating the visualizations.\n This process may take a while.");
+    console.log("> If no URLs JSON file is provided or an invalid JSON is provided,\nthe default git_urls.json file included in the projects is used.");
+    console.log("> If no destination folder is provided, the current is used.");
+    console.log("")
+    await test_apicture();
+  });
+
 program.parse(process.argv);
 
 function message() {
   console.log();
   console.log(
     " [ " +
-      chalk.bold.yellow("A") +
-      chalk.bold.blue("P") +
-      chalk.bold.green("I") +
-      chalk.bold.magenta("c") +
-      chalk.bold.red("t") +
-      chalk.bold.cyan("u") +
-      chalk.bold.yellow("r") +
-      chalk.bold.magenta("e") +
-      " :  A CLI tool to visually depict API evolution ]"
+    chalk.bold.yellow("A") +
+    chalk.bold.blue("P") +
+    chalk.bold.green("I") +
+    chalk.bold.magenta("c") +
+    chalk.bold.red("t") +
+    chalk.bold.cyan("u") +
+    chalk.bold.yellow("r") +
+    chalk.bold.magenta("e") +
+    " :  A CLI tool to visually depict API evolution ]"
   );
   console.log();
 }

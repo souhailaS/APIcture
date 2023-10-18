@@ -182,9 +182,9 @@ export function renderAllCharts(input) {
     metrics:input.metrics
   });
   var output = input.output;
-  var path = input.path;
+  var path = input.path ;
   if (!output) {
-    path = join(path, "APIcture", input.history_metadata.oas_file);
+    path = join(path, "APIcture", input.oas_path);
   } else {
 
     path = join(output)//, input.history_metadata.oas_file);

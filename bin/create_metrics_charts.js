@@ -125,7 +125,7 @@ export function renderMetrics(
   options,
   format,
   usedOptions,
-  oaspath
+  oas_path
 ) {
   // sort by commit_date
   data.sort((a, b) => {
@@ -523,7 +523,7 @@ export function renderMetrics(
 
   var breackingChanges = JSON.parse(
     fs.readFileSync(
-      join(path, ".previous_versions", oaspath.split(".")[0], ".breaking.json"),
+      join(path, ".previous_versions", oas_path.split(".")[0], ".breaking.json"),
       "utf8"
     )
   );
@@ -725,7 +725,7 @@ export function renderMetrics(
     // );
 
     fs.writeFileSync(
-      join(path, "APIcture", "metrics.html"),
+      join(path, "APIcture",oas_path.split(".")[0], "metrics.html"),
       rendered,
       (err) => {
         if (err) throw err;

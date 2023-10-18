@@ -7,10 +7,12 @@ import {
 } from "./versions_parser/regex.js";
 import { detectChanges } from "./versions_parser/upgrades_detector.js";
 
-export async function computeOverallGrowthMetrics(path, oaspath) {
+export async function computeOverallGrowthMetrics(path, oas_path) {
+
+  console.log("path", path);
   var diffs = [];
   var versions = [];
-  path = join(path, ".previous_versions", oaspath.split(".")[0]);
+  path = join(path, ".previous_versions", oas_path.split(".")[0]);
   // path = join(path, ".previous_versions");
   fs.writeFileSync(join(path, ".metrics.json"), "[]");
   var hashes = fs.readFileSync(join(path, ".api_commits.json"));
@@ -148,6 +150,7 @@ export async function computeOverallGrowthMetrics(path, oaspath) {
         if (stableCommits == diffs.length) {
           stable = true;
         }
+
 
         // BREAKING CHANGES
         var versions_changes = detectChanges(versions);

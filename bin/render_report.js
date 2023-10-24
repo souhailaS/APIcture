@@ -1,7 +1,8 @@
 import columnify from "columnify";
 import chalk from "chalk";
+import fs from "fs";
 
-export const renderReport = (report, format) => {
+export const renderReport = (report, format, output_dir, filename) => {
   var to_print = ``;
   if (!format) {
     to_print = `${chalk.bgBlueBright.bold(
@@ -61,7 +62,7 @@ export const renderReport = (report, format) => {
           " (" +
           ((100 * report.changes_types.breaking) /
             (report.changes_types.breaking +
-              report.changes_types.non_breaking)).toFixed(2)+
+              report.changes_types.non_breaking)).toFixed(2) +
           "%) " +
           " Changes",
         "\tNon Breaking Changes":
@@ -69,7 +70,7 @@ export const renderReport = (report, format) => {
           " (" +
           ((100 * report.changes_types.non_breaking) /
             (report.changes_types.breaking +
-              report.changes_types.non_breaking)).toFixed(2)+
+              report.changes_types.non_breaking)).toFixed(2) +
           "%) " +
           " Changes",
       })
@@ -113,13 +114,15 @@ export const renderReport = (report, format) => {
     );
     if (version_changes.length > 0) {
       to_print += `${chalk(columnify(version_changes))}\n`;
-
       to_print += `----------------------------`;
-
       to_print += `\n\n`;
     }
 
     console.log(to_print);
+  } else if (format == "json") {
+    const dest = output_dir ? filename ? `${output_dir}/${filename}.json` : `${output_dir}/report.json` : 'report.json';
+    fs.writeFileSync(dest, JSON.stringify(report, null, 2));
+
   }
 };
 

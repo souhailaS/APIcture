@@ -164,7 +164,7 @@ program
           repoPath,
           oasFiles[i].oas_path
         );
-        renderReport(over_all);
+        renderReport(over_all , format, output_dir, filename);
 
         if (clean) {
           await fs.promises.rm(`${repoPath}/.previous_versions`, {
@@ -486,7 +486,7 @@ program
         repoPath,
         oasFiles[i].oas_path
       );
-      renderReport(over_all);
+      renderReport(over_all, format);
 
       if (clean) {
         await fs.promises.rm(`${repoPath}/.previous_versions`, {

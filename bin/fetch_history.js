@@ -16,8 +16,10 @@ import colors from "ansi-colors";
 import semver from "semver";
 import { runExpresso } from "./oasgen/oasgen.js";
 
+
 export const fetchOASFiles = async (repoPath, all) => {
   const files = fs.readdirSync(repoPath);
+
   const openapiFiles = files.filter((file) => {
     const fileExtension = file.split(".").pop();
     return (
@@ -33,7 +35,7 @@ export const fetchOASFiles = async (repoPath, all) => {
       let oas = await SwaggerParser.parse(join(repoPath, file));
       return { oas_path: join(file), oas: oas };
     } catch (err) {
-      console.log(
+     console.log(
         "|- " + chalk.red("Error") + " in parsing " + chalk.underline(file) //+
         // " : " +
         // err.message
@@ -45,6 +47,7 @@ export const fetchOASFiles = async (repoPath, all) => {
 
   let validOAS = await Promise.all(yamlJson);
   validOAS = validOAS.filter((oas) => oas !== false);
+
 
   console.log(
     "|- " +
@@ -104,7 +107,7 @@ export const fetchOASFiles = async (repoPath, all) => {
   return validOAS;
 };
 
-export const fetchHistory = async (repoPath, oas_path) => {
+export const fetch_history = async (repoPath, oas_path) => {
   let gitRemote = "";
   let remoteUrl = "";
   try {

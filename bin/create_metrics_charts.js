@@ -719,10 +719,11 @@ export function renderMetrics(
       });
     }
 
-    // console.log(
-    //   "Writing metrics.html to",
-    //   join(path, "APIcture", "metrics.html")
-    // );
+    if (!fs.existsSync(join(path, "APIcture",oas_path.split(".")[0]))) {
+      fs.mkdirSync(join(path, "APIcture",oas_path.split(".")[0]), {
+        recursive: true,
+      });
+    }
 
     fs.writeFileSync(
       join(path, "APIcture",oas_path.split(".")[0], "metrics.html"),
@@ -731,6 +732,14 @@ export function renderMetrics(
         if (err) throw err;
       }
     );
+
+    console.log(
+      chalk.greenBright.underline.bold(
+        "|- Output Visualization saved as: " +
+          join(path, "APIcture",oas_path.split(".")[0], "metrics.html")
+      )
+    );
+    
   }
 
   var allOptions = {

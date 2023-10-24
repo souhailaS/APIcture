@@ -17,7 +17,7 @@
  */
 
 import { Command } from "commander";
-import { fetchHistory, fetchOASFiles } from "../fetch_history.js";
+import { fetch_history, fetchOASFiles } from "../fetch_history.js";
 import { compute_diff } from "../oasdiff.js";
 import { generateChangesViz } from "../create_sunburst.js";
 import { renderTree } from "../create_changes_tree.js";
@@ -76,7 +76,7 @@ program
     try {
       const oasFiles = await fetchOASFiles(repoPath, options.all);
       const nextFile = async (i) => {
-        let history_metadata = await fetchHistory(
+        let history_metadata = await fetch_history(
           repoPath,
           oasFiles[i].oas_path
         );
@@ -229,7 +229,7 @@ program
       if (!options.fast) {
         oasFiles = await fetchOASFiles(repoPath, options.all);
         var nextFile = async (i) => {
-          var history_metadata = await fetchHistory(
+          var history_metadata = await fetch_history(
             repoPath,
             oasFiles[i].oas_path
           );
@@ -302,7 +302,7 @@ program
         oasFiles = await fetchOASFiles(repoPath, options.all);
 
         var nextFile = async (i) => {
-          var history_metadata = await fetchHistory(
+          var history_metadata = await fetch_history(
             repoPath,
             oasFiles[i].oas_path
           );
@@ -353,6 +353,12 @@ program
   )
   .option("-o, --output <path>", "Path to the output directory")
   .option("-f, --format <format>", "Output format")
+  .option("-a, --all", "Generate OAS for all OAS files found in the repo")
+  .option(
+    "-fn, --filename <filename>",
+    "Output file name [Without file extension]"
+  )
+  .option("-fs, --fast", "Fast mode")
   .option("-e, --endpoints", "Show endpoints")
   .option("-m, --methods", "Show methods")
   .option("-p, --parameters", "Show parameters")
@@ -372,15 +378,70 @@ program
     vizOptions.datamodel = options.datamodel ? true : false;
     vizOptions.breakingChanges = options.breakingChanges ? true : false;
     vizOptions.breakingMethods = options.breakingMethods ? true : false;
+    vizOptions.all = options.all ? true : false;
+
+
+    const fast = options.fast || false;
+    const format = options.format || "html";
+    const filename = options.filename;
+    const clean = options.clean || false;
     const repoPath = options.repo || process.cwd();
     try {
-      await fetchHistory(repoPath);
-      await compute_diff(repoPath);
-      var metrics = await computeSizeMetrics(repoPath);
-      var usedOptions =
-        Object.keys(vizOptions).filter((key) => vizOptions[key] === true)
-          .length > 0;
-      renderMetrics(metrics, repoPath, vizOptions, options.format, usedOptions);
+      const oasFiles = await fetchOASFiles(repoPath, options.all);
+      // await fetch_history(repoPath);
+      // await compute_diff(repoPath);
+      // var metrics = await computeSizeMetrics(repoPath);
+      // var usedOptions =
+      //   Object.keys(vizOptions).filter((key) => vizOptions[key] === true)
+      //     .length > 0;
+      // renderMetrics(metrics, repoPath, vizOptions, options.format, usedOptions);
+
+      const nextFile = async (i) => {
+        let history_metadata = await fetch_history(
+          repoPath,
+          oasFiles[i].oas_path
+        );
+
+        await compute_diff(repoPath, oasFiles[i].oas_path, fast);
+
+
+        var metrics = await computeSizeMetrics(repoPath, oasFiles[i].oas_path);
+        var vizOptions = {};
+        vizOptions.endpoints = options.endpoints ? true : false;
+        vizOptions.methods = options.methods ? true : false;
+        vizOptions.parameters = options.parameters ? true : false;
+        vizOptions.datamodel = options.datamodel ? true : false;
+        vizOptions.breakingChanges = options.breakingChanges ? true : false;
+        vizOptions.breakingMethods = options.breakingMethods ? true : false;
+        var usedOptions = false;
+
+        if (format == "html" || !format) {
+          renderMetrics(metrics, repoPath, vizOptions, format, usedOptions, oasFiles[i].oas_path);
+        }
+
+        if (clean) {
+          await fs.promises.rm(`${repoPath}/.previous_versions`, {
+            recursive: true,
+          });
+          console.log(
+            chalk.bold(
+              `|-- Cleaned 🧹 🧹 `
+            )
+          );
+        }
+
+        i++;
+        if (i < oasFiles.length) {
+          await nextFile(i);
+        } else {
+          return true;
+        }
+      };
+      if (Array.isArray(oasFiles)) await nextFile(0);
+      else {
+        await compute_diff(repoPath, oasFiles.oas_file, fast);
+      }
+      return true;
     } catch (err) {
       console.log(err);
     }
@@ -418,7 +479,7 @@ program
     const options = program.opts();
     const repoPath = options.repo || process.cwd();
     if (!options.fast) {
-      await fetchHistory(repoPath);
+      await fetch_history(repoPath);
       await compute_diff(repoPath);
     }
 

@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { join } from "path";
 import { exec } from "child_process";
-import { fetchHistory, fetchOASFiles } from "../fetch_history.js";
+import { fetch_history, fetchOASFiles } from "../fetch_history.js";
 import { compute_diff } from "../oasdiff.js";
 import { generateChangesViz } from "../create_sunburst.js";
 import { renderTree } from "../create_changes_tree.js";
@@ -140,7 +140,7 @@ export default async function generateGallery(path) {
         var oasFiles = [];
         oasFiles = await fetchOASFiles(repoPath, true);
         var nextFile = async (i) => {
-          var history_metadata = await fetchHistory(
+          var history_metadata = await fetch_history(
             repoPath,
             oasFiles[i].oaspath
           );

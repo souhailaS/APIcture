@@ -12,7 +12,6 @@ import readline from "readline";
 import git_urls from "./test_repos.json" assert { type: "json" };
 
 const __dirname = new URL(".", import.meta.url).pathname;
-console.log(__dirname);
 
 export default async function clone() {   
   // console log that the script is running and will start by cloning the repos

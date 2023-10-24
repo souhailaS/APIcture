@@ -212,7 +212,6 @@ program
   .option("-f, --format <format>", "Output format")
   .option("-fs, --fast", "Fast mode")
   .option("-a, --all", "Generate OAS for all OAS files found in the repo")
-
   .action(async () => {
     message();
     const options = program.opts();
@@ -366,11 +365,10 @@ program
   .option("-bc, --breakingChanges", "Show breaking changes")
   .option("-bm, --breakingMethods", "Show breaking methods")
   .option("-c, --clean", "Clean up all the history files after generation")
-
-
   .action(async () => {
     message();
     const options = program.opts();
+
     var vizOptions = {};
     vizOptions.endpoints = options.endpoints ? true : false;
     vizOptions.methods = options.methods ? true : false;
@@ -476,16 +474,46 @@ program
 
   .action(async () => {
     message();
+
     const options = program.opts();
     const repoPath = options.repo || process.cwd();
-    if (!options.fast) {
-      await fetch_history(repoPath);
-      await compute_diff(repoPath);
-    }
+    const output_dir = options.output;
+    const format = options.format;
+    const filename = options.filename;
+    const fast = options.fast || false;
+    const clean = options.clean || false;
 
-    var metrics = await computeSizeMetrics(repoPath);
-    const overrAll = await computeOverallGrowthMetrics(repoPath, metrics);
-    renderReport(overrAll);
+    const oasFiles = await fetchOASFiles(repoPath, options.all);
+    const nextFile = async (i) => {
+      await compute_diff(repoPath, oasFiles[i].oas_path, fast);
+      const over_all = await computeOverallGrowthMetrics(
+        repoPath,
+        oasFiles[i].oas_path
+      );
+      renderReport(over_all);
+
+      if (clean) {
+        await fs.promises.rm(`${repoPath}/.previous_versions`, {
+          recursive: true,
+        });
+        console.log(
+          chalk.bold(
+            `|-- Cleaned 🧹 🧹 `
+          )
+        );
+      }
+
+      i++;
+      if (i < oasFiles.length) {
+        await nextFile(i);
+      } else {
+        return true;
+      }
+    };
+    if (Array.isArray(oasFiles)) await nextFile(0);
+    else {
+      await compute_diff(repoPath, oasFiles.oas_file, fast);
+    }
 
     if (options.clean) {
       fs.promises.rm(`${repoPath}/.previous_versions`, { recursive: true });

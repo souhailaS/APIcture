@@ -118,7 +118,7 @@ export async function compute_diff(path, oas_path, isFast) {
             var diffs = JSON.parse(fs.readFileSync(join(path, ".diffs.json")));
           diffs.push({
             hash: api_commits[i].hash,
-            diff: stdout,
+            diff: JSON.parse(stdout),
             commit_date: api_commits[i].commit_date,
           });
 

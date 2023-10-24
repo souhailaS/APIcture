@@ -83,7 +83,7 @@ export const fetchOASFiles = async (repoPath, all) => {
       );
       return history_metadata;
     } else {
-      console.log("No OAS file found in the root directory of the repo");
+      console.log(chalk.red("No OAS file found in the root directory of the repo"));
       process.exit(0);
     }
   }
@@ -120,7 +120,7 @@ export const fetch_history = async (repoPath, oas_path) => {
       }
     }
   } catch (err) {
-    console.log("No remote url found");
+    console.log(chalk.red("|- No remote url found"));
   }
 
   let history_metadata = {};
@@ -234,7 +234,7 @@ export const fetch_history = async (repoPath, oas_path) => {
   };
   if (previousVersions.length > 0) await nextVersion(0);
   else {
-    console.log("No previous versions found");
+    console.log(chalk.red("|- No previous versions found"));
     return;
   }
 
@@ -329,7 +329,7 @@ async function fetchOlderVersions(repoPath, targetFolder) {
       }
     }
   } catch (err) {
-    console.log("No remote url found");
+    console.log(chalk.red("|- No remote url found"));
   }
 
   const git = simpleGit(repoPath);

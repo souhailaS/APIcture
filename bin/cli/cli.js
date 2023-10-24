@@ -157,18 +157,14 @@ program
             options: vizOptions,
             usedOptions,
           };
-
-          console.log(
-            to_render
-          );
           renderAllCharts(to_render);
         }
 
-        const overrAll = await computeOverallGrowthMetrics(
+        const over_all = await computeOverallGrowthMetrics(
           repoPath,
           oasFiles[i].oas_path
         );
-        renderReport(overrAll);
+        renderReport(over_all);
 
         if (clean) {
           await fs.promises.rm(`${repoPath}/.previous_versions`, {
@@ -194,7 +190,7 @@ program
       }
       return true;
     } catch (err) {
-      console.log(err);
+      // console.log(err);
     }
   });
 

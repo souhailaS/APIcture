@@ -79,7 +79,7 @@ export const renderReport = (report, format) => {
     to_print += `${chalk.bgCyan.bold(`  API Versioning  `)}: `;
     to_print += `\n\n`;
 
-    var versioning = analyseVersioning(report);
+    const versioning = analyze_versioning(report);
     to_print += `----------------------------\n`;
     to_print += `${chalk(
       columnify(
@@ -123,7 +123,7 @@ export const renderReport = (report, format) => {
   }
 };
 
-function analyseVersioning(report) {
+function analyze_versioning(report) {
   var versions_changes = report.versions_changes;
 
   var versionsChanges = versions_changes

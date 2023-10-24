@@ -92,7 +92,7 @@ export async function compute_diff(path, oas_path, isFast) {
     }
 
     const next_pair = async (i) => {
-      if (false) { 
+      if (false) {
         // TODO #16 add a flag to disable/enable diffs logs @souhailaS
         console.log(
           chalk.blue(
@@ -126,7 +126,7 @@ export async function compute_diff(path, oas_path, isFast) {
 
           // diff 1 -check-non-breaking
           if (stdout) {
-            var nonBreakingChanges = await extractNonBreakingChanges(stdout);
+            var nonBreakingChanges = await extractNonBreakingChanges(JSON.parse(stdout));
             var nonBreakingChangesArray = fs.readFileSync(
               join(path, ".non-breaking.json")
             );
@@ -163,7 +163,7 @@ export async function compute_diff(path, oas_path, isFast) {
             JSON.stringify(breaking)
           );
         } catch (error) {
-          console.log(error);
+          // console.log(error);
         }
 
         if (i < api_commits.length - 1) {
@@ -192,7 +192,6 @@ export async function compute_diff(path, oas_path, isFast) {
 
 async function extractNonBreakingChanges(diff) {
   var nonBreakingChanges = {};
-
   if (diff.info) {
     if (diff.info.title) {
       if (diff.info.title.from == "" && diff.info.title.to != "") {
@@ -504,6 +503,18 @@ async function extractNonBreakingChanges(diff) {
                           });
                         }
                       }
+                      if (
+                        c.items?.properties?.added
+                      ) {
+                        var change = `property added to schema of resp`;
+                        //`property added to schema of response ${key}/${keys}`;
+                        if (!nonBreakingChanges[change]) {
+                          nonBreakingChanges[change] = 1;
+                        } else {
+                          nonBreakingChanges[change]++;
+                        }
+                      }
+
                     });
                   }
                 }

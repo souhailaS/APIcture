@@ -31,7 +31,7 @@ import chalk from "chalk";
 import { generateOAS } from "../oasgen/oasgen.js";
 import vissoft from "../../vissoft/vissoft.js";
 import test_apicture from "../../bin/test/test.js";
-import packageJson from "../../package.json" assert { type: "json" };
+import packageJson from "../../package.json" with { type: "json" };
 import fs from "fs";
 
 const program = new Command();

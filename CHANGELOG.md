@@ -13,3 +13,7 @@
 
 ## [0.0.10]
 - README fix
+
+## [0.0.23]
+- Vulnerabilities fix. 
+- Packages updates

@@ -2,7 +2,7 @@ import fs from "fs";
 import ejs from "ejs";
 import semver, { sort } from "semver";
 import path, { join } from "path";
-import echarts, { use } from "echarts";
+import {init} from "echarts";
 import { createCanvas, loadImage } from "canvas";
 import { fileURLToPath } from "url";
 import SwaggerParser from "@apidevtools/swagger-parser";
@@ -785,7 +785,7 @@ function renderSunburst(
   }
 
   if (format.toLowerCase() == "svg") {
-    const chart = echarts.init(null, null, {
+    const chart = init(null, null, {
       renderer: "svg", // must use SVG rendering mode
       ssr: true, // enable SSR
       width: 500, // need to specify height and width
@@ -815,7 +815,7 @@ function renderSunburst(
   // PNG output
   if (format.toLowerCase() == "png") {
     const canvas = createCanvas(800, 800);
-    const chart = echarts.init(canvas);
+    const chart = init(canvas);
     chart.setOption(chartOptions);
     const buffer = canvas.toBuffer("image/png", {
       compressionLevel: 9,

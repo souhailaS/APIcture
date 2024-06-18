@@ -9,7 +9,7 @@ import { exec } from "child_process";
 import readline from "readline";
 
 
-import git_urls from "./test_repos.json" assert { type: "json" };
+import git_urls from "./test_repos.json" with { type: "json" };
 
 const __dirname = new URL(".", import.meta.url).pathname;
 

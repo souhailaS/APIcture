@@ -3,7 +3,7 @@ import { computeFieldFrequency } from "./change_schema.js";
 import chalk from "chalk";
 import { join } from "path";
 import fs from "fs";
-import echarts from "echarts";
+import {init} from "echarts";
 import ejs from "ejs";
 import open from "open";
 import dayjs from "dayjs";
@@ -543,7 +543,7 @@ export async function renderTree(
   // PNG output
   if (format.toLowerCase() == "png") {
     const canvas = createCanvas(800, 800);
-    const chart = echarts.init(canvas);
+    const chart = init(canvas);
     chart.setOption(chartOptions);
     const buffer = canvas.toBuffer("image/png", {
       compressionLevel: 9,
@@ -565,7 +565,7 @@ export async function renderTree(
   // SVG output
   if (format.toLowerCase() == "svg") {
     console.log("SVG output");
-    const chart = echarts.init(null, null, {
+    const chart = init(null, null, {
       renderer: "svg", // must use SVG rendering mode
       ssr: true, // enable SSR
       width: 500, // need to specify height and width

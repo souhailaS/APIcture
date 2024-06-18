@@ -8,7 +8,7 @@ import { promisify } from "util";
 import { exec } from "child_process";
 import readline from "readline";
 
-import git_urls from "./git_urls.json" assert { type: "json" };
+import git_urls from "./git_urls.json" with { type: "json" };
 
 
 export default async function clone() {

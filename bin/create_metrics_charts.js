@@ -1,7 +1,7 @@
 import fs from "fs";
 import { join } from "path";
 import ejs from "ejs";
-import echarts from "echarts";
+import {init} from "echarts";
 import chalk from "chalk";
 import { createCanvas, loadImage } from "canvas";
 
@@ -754,7 +754,7 @@ export function renderMetrics(
     if (format.toLowerCase() == "svg") {
       Object.keys(allOptions).forEach((d) => {
         if (options[d] || !usedOptions) {
-          const chart = echarts.init(null, null, {
+          const chart = init(null, null, {
             renderer: "svg", // must use SVG rendering mode
             ssr: true, // enable SSR
             width: 500, // need to specify height and width
@@ -794,7 +794,7 @@ export function renderMetrics(
         if (options[d] || !usedOptions) {
           const canvas = createCanvas(800, 800);
           // ECharts can use the Canvas instance created by node-canvas as a container directly
-          const chart = echarts.init(canvas);
+          const chart = init(canvas);
           chart.setOption(allOptions[d]);
           // render then  as png with good quality with high pixel density and white background
           const buffer = canvas.toBuffer("image/png", {

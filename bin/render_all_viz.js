@@ -1,8 +1,6 @@
 import ejs from "ejs";
 import fs from "fs";
-import path from "path";
 import { join } from "path";
-import echarts from "echarts";
 
 const HTML = `<!DOCTYPE html>
 <html>
